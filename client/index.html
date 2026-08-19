@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Campus Portal - Next-Gen University Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .auth-page {
+      min-height: 100vh;
+      background: radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.08) 0%, transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
+                  #f8fafc;
+      display: flex;
+      flex-direction: column;
+    }
+    .landing-header {
+      padding: 1.25rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .auth-hero-container {
+      max-width: 1280px;
+      margin: auto;
+      padding: 3rem 2rem;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 3.5rem;
+      align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 1.2rem;
+    }
+    .hero-main-title {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      letter-spacing: -0.03em;
+    }
+    .hero-main-title span {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-desc {
+      font-size: 1.1rem;
+      color: var(--gray-600);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    .feature-highlights {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+    .feat-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: white;
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--card-shadow);
+    }
+    .feat-icon {
+      font-size: 1.5rem;
+      background: var(--gray-100);
+      padding: 8px;
+      border-radius: var(--radius-sm);
+    }
+    .feat-text h5 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 2px;
+    }
+    .feat-text p {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+    }
+
+    /* Auth Box */
+    .auth-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      border: 1px solid var(--gray-200);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+    }
+    .auth-header {
+      text-align: center;
+      margin-bottom: 1.8rem;
+    }
+    .auth-header h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--gray-900);
+    }
+    .auth-header p {
+      color: var(--gray-500);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+    .quick-login-box {
+      background: var(--gray-50);
+      border: 1px dashed var(--gray-300);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .quick-login-box h6 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .demo-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    .btn-demo {
+      padding: 7px 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gray-200);
+      background: white;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-demo:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 1.2rem 0;
+      color: var(--gray-400);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .divider span {
+      padding: 0 10px;
+    }
+    .link-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      font-size: inherit;
+    }
+    @media (max-width: 992px) {
+      .auth-hero-container {
+        grid-template-columns: 1fr;
+        padding: 2rem 1.5rem;
+      }
+      .landing-header {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body class="auth-page">
+
+  <!-- Header -->
+  <header class="landing-header">
+    <a href="index.html" class="brand-logo">
+      <div class="brand-icon">🎓</div>
+      <span>Smart Campus</span>
+    </a>
+    <div style="display: flex; gap: 10px;">
+      <a href="dashboard.html" class="btn btn-secondary btn-sm">Student Demo</a>
+      <a href="admin.html" class="btn btn-primary btn-sm">Admin Demo</a>
+    </div>
+  </header>
+
+  <!-- Main Hero & Auth Section -->
+  <main class="auth-hero-container">
+    
+    <!-- Left Hero Context -->
+    <div class="hero-left">
+      <div class="hero-badge">⚡ Full Stack University Portal</div>
+      <h1 class="hero-main-title">
+        The Central Nervous System for <span>Smart Campus</span> Operations
+      </h1>
+      <p class="hero-desc">
+        A unified platform empowering students, faculty, and administrators to stay updated with campus notices, resolve lost &amp; found queries, track complaints, and book university facilities in real time.
+      </p>
+
+      <div class="feature-highlights">
+        <div class="feat-item">
+          <div class="feat-icon">📢</div>
+          <div class="feat-text">
+            <h5>Digital Notice Board</h5>
+            <p>Exam datesheets, events &amp; urgent circulars with attachments.</p>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">🔍</div>
+          <div class="feat-text">
+            <h5>Lost &amp; Found Hub</h5>
+            <p>Report misplaced or found items with 1-click claim flow.</p>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">🛠️</div>
+          <div class="feat-text">
+            <h5>Grievance Redressal</h5>
+            <p>Direct ticket logging for Wi-Fi, labs &amp; hostel facilities.</p>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">🏢</div>
+          <div class="feat-text">
+            <h5>Smart Lab &amp; Hall Booking</h5>
+            <p>Real-time slot reservation with automated admin approvals.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Login Card -->
+    <div class="auth-right">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h3 id="formTitle">Sign In to Campus</h3>
+          <p id="formSubTitle">Enter your university credentials to continue</p>
+        </div>
+
+        <!-- 1-Click Presentation Demo Logins -->
+        <div class="quick-login-box">
+          <h6>⚡ 1-Click Presentation Demo</h6>
+          <div class="demo-buttons">
+            <button type="button" class="btn-demo" onclick="quickLogin('student')">👨‍🎓 Student</button>
+            <button type="button" class="btn-demo" onclick="quickLogin('faculty')">👩‍🏫 Faculty</button>
+            <button type="button" class="btn-demo" onclick="quickLogin('admin')">🛡️ Admin</button>
+          </div>
+        </div>
+
+        <div class="divider"><span>OR SIGN IN WITH EMAIL</span></div>
+
+        <!-- Form -->
+        <form id="authForm">
+          <div class="form-group" id="nameGroup" style="display: none;">
+            <label class="form-label" for="nameInput">Full Name</label>
+            <input type="text" id="nameInput" class="form-control" placeholder="e.g. Aarav Sharma">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="emailInput">Campus Email</label>
+            <input type="email" id="emailInput" class="form-control" placeholder="name@campus.edu" value="student@campus.edu" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="passwordInput">Password</label>
+            <input type="password" id="passwordInput" class="form-control" placeholder="••••••••" value="password123" required>
+          </div>
+
+          <div class="form-group" id="roleGroup">
+            <label class="form-label" for="roleSelect">Select Role</label>
+            <select id="roleSelect" class="form-control">
+              <option value="student">Student (B.Tech / MCA / B.Sc)</option>
+              <option value="faculty">Faculty / Department Staff</option>
+              <option value="admin">Administrator / Management</option>
+            </select>
+          </div>
+
+          <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+            Sign In to Dashboard
+          </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.2rem; font-size: 0.875rem;">
+          <span id="toggleText">Need an account?</span>
+          <button type="button" class="link-btn" id="toggleLink" onclick="toggleAuthMode()" style="margin-left: 4px;">Register here</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script>
+    let isLoginMode = true;
+
+    function toggleAuthMode() {
+      isLoginMode = !isLoginMode;
+      document.getElementById('formTitle').innerText = isLoginMode ? 'Sign In to Campus' : 'Create Campus Account';
+      document.getElementById('formSubTitle').innerText = isLoginMode ? 'Enter your university credentials to continue' : 'Register your student or staff profile';
+      document.getElementById('nameGroup').style.display = isLoginMode ? 'none' : 'block';
+      document.getElementById('submitBtn').innerText = isLoginMode ? 'Sign In to Dashboard' : 'Complete Registration';
+      document.getElementById('toggleText').innerText = isLoginMode ? 'Need an account?' : 'Already registered?';
+      document.getElementById('toggleLink').innerText = isLoginMode ? 'Register here' : 'Sign In';
+    }
+
+    function quickLogin(role) {
+      if (role === 'student') {
+        StateManager.setUser({
+          name: 'Aarav Sharma',
+          email: 'aarav.sharma@campus.edu',
+          role: 'student',
+          department: 'Computer Science & Engineering',
+          rollNo: '22BCSE042'
+        });
+        showToast('Logged in as Student (Aarav Sharma)', 'success');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
+      } else if (role === 'faculty') {
+        StateManager.setUser({
+          name: 'Dr. Priya Patel',
+          email: 'dr.priya@campus.edu',
+          role: 'faculty',
+          department: 'Electronics & Communication',
+          designation: 'Associate Professor'
+        });
+        showToast('Logged in as Faculty (Dr. Priya Patel)', 'success');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
+      } else if (role === 'admin') {
+        StateManager.setUser({
+          name: 'Campus Administrator',
+          email: 'admin@campus.edu',
+          role: 'admin',
+          department: 'Dean Office'
+        });
+        showToast('Logged in as Administrator', 'success');
+        setTimeout(() => { window.location.href = 'admin.html'; }, 400);
+      }
+    }
+
+    document.getElementById('authForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const email = document.getElementById('emailInput').value;
+      const role = document.getElementById('roleSelect').value;
+      const name = isLoginMode ? (email.split('@')[0].toUpperCase() || 'Campus User') : document.getElementById('nameInput').value;
+
+      StateManager.setUser({ name: name, email: email, role: role });
+      showToast('Welcome ' + name + '! Signing you in...', 'success');
+
+      setTimeout(function () {
+        if (role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
+      }, 500);
+    });
+  </script>
+</body>
+</html>

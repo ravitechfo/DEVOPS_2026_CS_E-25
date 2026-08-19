@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student & Faculty Portal - Smart Campus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <a href="dashboard.html" class="brand-logo">
+      <div class="brand-icon">🎓</div>
+      <span>Smart Campus</span>
+    </a>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button type="button" class="nav-tab-btn active" onclick="switchModule('notices')">
+        📢 <span>Notice Board</span>
+      </button>
+      <button type="button" class="nav-tab-btn" onclick="switchModule('lostfound')">
+        🔍 <span>Lost &amp; Found</span>
+      </button>
+      <button type="button" class="nav-tab-btn" onclick="switchModule('complaints')">
+        🛠️ <span>Grievance Desk</span>
+      </button>
+      <button type="button" class="nav-tab-btn" onclick="switchModule('bookings')">
+        🏢 <span>Facility Booking</span>
+      </button>
+    </div>
+
+    <!-- User Profile & Controls -->
+    <div class="user-controls">
+      <div class="user-badge">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div>
+          <div id="navUserName" style="line-height: 1.2;">Aarav Sharma</div>
+          <span class="role-pill role-student" id="navUserRole">STUDENT</span>
+        </div>
+      </div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="StateManager.logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main-wrapper">
+
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <h1 class="hero-title" id="welcomeTitle">Welcome to Smart Campus</h1>
+      <p class="hero-subtitle">
+        Stay updated with university circulars, report lost belongings, raise campus maintenance requests, and reserve university labs &amp; seminar halls seamlessly.
+      </p>
+    </div>
+
+    <!-- KPI Stat Counters -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Active Notices</h4>
+          <div class="stat-number" id="statNoticeCount">0</div>
+        </div>
+        <div class="stat-icon-wrap stat-blue">📢</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Lost &amp; Found Items</h4>
+          <div class="stat-number" id="statLostCount">0</div>
+        </div>
+        <div class="stat-icon-wrap stat-amber">🔍</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Active Complaints</h4>
+          <div class="stat-number" id="statComplaintCount">0</div>
+        </div>
+        <div class="stat-icon-wrap stat-purple">🛠️</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>My Bookings</h4>
+          <div class="stat-number" id="statBookingCount">0</div>
+        </div>
+        <div class="stat-icon-wrap stat-emerald">🏢</div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODULE 1: CAMPUS NOTICE BOARD & UPDATES -->
+    <!-- ============================================== -->
+    <div id="module-notices" class="module-content active">
+      <div class="toolbar-row">
+        <div class="filter-group" id="noticeFilterGroup">
+          <button type="button" class="filter-btn active" onclick="filterNotices('All')">All Notices</button>
+          <button type="button" class="filter-btn" onclick="filterNotices('Exams')">📝 Exams &amp; Datesheets</button>
+          <button type="button" class="filter-btn" onclick="filterNotices('Events')">🎉 Events &amp; Fests</button>
+          <button type="button" class="filter-btn" onclick="filterNotices('Placement')">💼 Placements</button>
+          <button type="button" class="filter-btn" onclick="filterNotices('Academic')">📚 Academic</button>
+        </div>
+
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="noticeSearchInput" placeholder="Search notices by keyword..." oninput="handleNoticeSearch()">
+        </div>
+      </div>
+
+      <div class="grid-cards" id="noticesContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODULE 2: LOST & FOUND PORTAL -->
+    <!-- ============================================== -->
+    <div id="module-lostfound" class="module-content">
+      <div class="toolbar-row">
+        <div class="filter-group">
+          <button type="button" class="filter-btn active" onclick="filterLostFound('All')">All Items</button>
+          <button type="button" class="filter-btn" onclick="filterLostFound('lost')">🔴 Lost Items</button>
+          <button type="button" class="filter-btn" onclick="filterLostFound('found')">🟢 Found Items</button>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="lfSearchInput" placeholder="Search item or location..." oninput="handleLostFoundSearch()">
+          </div>
+          <button type="button" class="btn btn-danger" onclick="openModal('modalReportLost')">+ Report Lost</button>
+          <button type="button" class="btn btn-success" onclick="openModal('modalReportFound')">+ Report Found</button>
+        </div>
+      </div>
+
+      <div class="grid-cards" id="lostFoundContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODULE 3: GRIEVANCES & COMPLAINTS DESK -->
+    <!-- ============================================== -->
+    <div id="module-complaints" class="module-content">
+      <div class="toolbar-row">
+        <div class="filter-group">
+          <button type="button" class="filter-btn active" onclick="filterComplaints('All')">All Complaints</button>
+          <button type="button" class="filter-btn" onclick="filterComplaints('Submitted')">Submitted</button>
+          <button type="button" class="filter-btn" onclick="filterComplaints('In Progress')">In Progress</button>
+          <button type="button" class="filter-btn" onclick="filterComplaints('Resolved')">Resolved</button>
+        </div>
+
+        <div>
+          <button type="button" class="btn btn-primary" onclick="openModal('modalReportComplaint')">
+            + Raise New Grievance
+          </button>
+        </div>
+      </div>
+
+      <div class="grid-cards" id="complaintsContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODULE 4: FACILITY & LAB BOOKINGS -->
+    <!-- ============================================== -->
+    <div id="module-bookings" class="module-content">
+      <div class="toolbar-row">
+        <h3>Available Campus Facilities &amp; Labs</h3>
+        <button type="button" class="btn btn-primary" onclick="openModal('modalBookFacility')">
+          + Reserve Facility / Lab Slot
+        </button>
+      </div>
+
+      <!-- Campus Resources Grid -->
+      <div class="grid-cards" style="margin-bottom: 2.5rem;" id="resourcesContainer">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <h3 style="margin-bottom: 1rem; color: var(--gray-900);">My Facility Reservations</h3>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Facility / Resource</th>
+              <th>Location</th>
+              <th>Date</th>
+              <th>Time Slot</th>
+              <th>Purpose</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="myBookingsTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div> <!-- /main-wrapper -->
+
+  <!-- ============================================== -->
+  <!-- MODALS -->
+  <!-- ============================================== -->
+
+  <!-- Modal: Read Full Notice -->
+  <div class="modal-backdrop" id="modalNoticeView">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title" id="viewNoticeTitle">Campus Announcement</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalNoticeView')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+          <span id="viewNoticeTag" class="card-tag tag-academic">Academic</span>
+          <span id="viewNoticeDate" class="card-date">18 Aug 2026</span>
+        </div>
+        <p id="viewNoticeAuthor" style="font-weight: 700; color: var(--gray-700); margin-bottom: 0.8rem; font-size: 0.9rem;"></p>
+        <p id="viewNoticeContent" style="color: var(--gray-600); line-height: 1.7; font-size: 0.95rem;"></p>
+        <div id="viewNoticeAttachmentBox" style="margin-top: 1.5rem; display: none; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm);">
+          📎 <strong>Attachment:</strong> <span id="viewNoticeAttachmentName">file.pdf</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalNoticeView')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Report Lost Item -->
+  <div class="modal-backdrop" id="modalReportLost">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title">🔴 Report Lost Belonging</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalReportLost')">&times;</button>
+      </div>
+      <form id="formReportLost" onsubmit="handleCreateLostItem(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="lostItemTitle">Item Title</label>
+            <input type="text" id="lostItemTitle" class="form-control" placeholder="e.g. Sony WH-1000XM4 Headphones" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="lostItemCategory">Category</label>
+              <select id="lostItemCategory" class="form-control">
+                <option value="Electronics">Electronics</option>
+                <option value="ID Cards">ID Cards &amp; Passes</option>
+                <option value="Bags &amp; Wallets">Bags &amp; Wallets</option>
+                <option value="Books &amp; Stationery">Books &amp; Stationery</option>
+                <option value="Keys">Keys</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="lostItemIcon">Icon / Emoji</label>
+              <input type="text" id="lostItemIcon" class="form-control" value="🎧">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lostItemLocation">Last Seen Location</label>
+            <input type="text" id="lostItemLocation" class="form-control" placeholder="e.g. Audi-1, 2nd Floor" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lostItemDesc">Description &amp; Unique Marks</label>
+            <textarea id="lostItemDesc" class="form-control" placeholder="Mention color, brand, stickers, or identifiers..." required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="lostContactName">Your Name</label>
+              <input type="text" id="lostContactName" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="lostContactPhone">Contact Phone / Email</label>
+              <input type="text" id="lostContactPhone" class="form-control" placeholder="+91 98765 43210" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalReportLost')">Cancel</button>
+          <button type="submit" class="btn btn-danger">Publish Lost Alert</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Report Found Item -->
+  <div class="modal-backdrop" id="modalReportFound">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title">🟢 Report Found Belonging</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalReportFound')">&times;</button>
+      </div>
+      <form id="formReportFound" onsubmit="handleCreateFoundItem(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="foundItemTitle">Item Name / Title</label>
+            <input type="text" id="foundItemTitle" class="form-control" placeholder="e.g. Casio Scientific Calculator" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="foundItemCategory">Category</label>
+              <select id="foundItemCategory" class="form-control">
+                <option value="Electronics">Electronics</option>
+                <option value="ID Cards">ID Cards &amp; Passes</option>
+                <option value="Bags &amp; Wallets">Bags &amp; Wallets</option>
+                <option value="Books &amp; Stationery">Books &amp; Stationery</option>
+                <option value="Keys">Keys</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="foundItemIcon">Icon / Emoji</label>
+              <input type="text" id="foundItemIcon" class="form-control" value="📦">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="foundItemLocation">Where Was It Found?</label>
+            <input type="text" id="foundItemLocation" class="form-control" placeholder="e.g. Canteen Counter 2" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="foundItemDesc">Description / Handover Location</label>
+            <textarea id="foundItemDesc" class="form-control" placeholder="Describe the item or mention if handed to Security Desk..." required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="foundContactName">Reported By</label>
+              <input type="text" id="foundContactName" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="foundContactPhone">Contact / Handover Desk</label>
+              <input type="text" id="foundContactPhone" class="form-control" placeholder="e.g. Security Booth / Phone" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalReportFound')">Cancel</button>
+          <button type="submit" class="btn btn-success">Publish Found Notice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Raise Grievance / Complaint -->
+  <div class="modal-backdrop" id="modalReportComplaint">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title">🛠️ Raise Campus Grievance / Complaint</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalReportComplaint')">&times;</button>
+      </div>
+      <form id="formReportComplaint" onsubmit="handleCreateComplaint(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="cmpTitle">Complaint Title / Issue Summary</label>
+            <input type="text" id="cmpTitle" class="form-control" placeholder="e.g. Wi-Fi Access Point Not Responding" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="cmpCategory">Category</label>
+              <select id="cmpCategory" class="form-control">
+                <option value="IT &amp; Wi-Fi">IT &amp; Wi-Fi Network</option>
+                <option value="Classroom &amp; Labs">Classroom &amp; Labs</option>
+                <option value="Cleanliness &amp; Hygiene">Cleanliness &amp; Sanitation</option>
+                <option value="Hostel &amp; Mess">Hostel &amp; Mess</option>
+                <option value="Library">Library</option>
+                <option value="Infrastructure">Electrical &amp; Maintenance</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cmpUrgency">Urgency Level</label>
+              <select id="cmpUrgency" class="form-control">
+                <option value="Normal">Normal</option>
+                <option value="High">High Priority</option>
+                <option value="Critical">Critical / Emergency</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cmpLocation">Specific Location (Room/Block/Floor)</label>
+            <input type="text" id="cmpLocation" class="form-control" placeholder="e.g. Block B, 3rd Floor, Lab 4" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cmpDesc">Detailed Description of the Issue</label>
+            <textarea id="cmpDesc" class="form-control" placeholder="Provide complete details to help maintenance team take prompt action..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalReportComplaint')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Ticket</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Book Facility Slot -->
+  <div class="modal-backdrop" id="modalBookFacility">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title">🏢 Reserve Campus Facility / Lab</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalBookFacility')">&times;</button>
+      </div>
+      <form id="formBookFacility" onsubmit="handleCreateBooking(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="bookFacilitySelect">Select Facility / Lab</label>
+            <select id="bookFacilitySelect" class="form-control" required></select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="bookDate">Reservation Date</label>
+              <input type="date" id="bookDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="bookTimeSlot">Time Slot</label>
+              <select id="bookTimeSlot" class="form-control" required>
+                <option value="09:00 AM - 11:00 AM">09:00 AM - 11:00 AM</option>
+                <option value="11:00 AM - 01:00 PM">11:00 AM - 01:00 PM</option>
+                <option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM</option>
+                <option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="bookPurpose">Purpose / Event Description</label>
+            <textarea id="bookPurpose" class="form-control" placeholder="e.g. Department Coding Contest / Guest Lecture / Project Presentation" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalBookFacility')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Booking Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

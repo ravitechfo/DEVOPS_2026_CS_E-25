@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin & Management Console - Smart Campus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-navbar {
+      background: #0f172a;
+      color: white;
+      border-bottom: 1px solid #334155;
+    }
+    .admin-navbar .brand-logo {
+      color: white;
+    }
+    .admin-navbar .nav-tabs {
+      background: #1e293b;
+    }
+    .admin-navbar .nav-tab-btn {
+      color: #94a3b8;
+    }
+    .admin-navbar .nav-tab-btn:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .admin-navbar .nav-tab-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+    .admin-navbar .user-badge {
+      background: #1e293b;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Admin Navbar -->
+  <nav class="navbar admin-navbar">
+    <a href="admin.html" class="brand-logo">
+      <div class="brand-icon" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);">🛡️</div>
+      <span>Smart Campus Admin</span>
+    </a>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button type="button" class="nav-tab-btn active" onclick="switchAdminTab('notices')">
+        📢 <span>Notices</span>
+      </button>
+      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('grievances')">
+        🛠️ <span>Grievance Desk</span>
+      </button>
+      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('lostfound')">
+        🔍 <span>Lost &amp; Found Hub</span>
+      </button>
+      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('bookings')">
+        🏢 <span>Booking Approvals</span>
+      </button>
+    </div>
+
+    <!-- Admin Profile & Switcher -->
+    <div class="user-controls">
+      <a href="dashboard.html" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid #475569;">
+        👁️ Student View
+      </a>
+      <div class="user-badge">
+        <div class="user-avatar" style="background: #fce7f3; color: #be185d;">A</div>
+        <div>
+          <div id="adminUserName">Campus Admin</div>
+          <span class="role-pill role-admin">ADMINISTRATOR</span>
+        </div>
+      </div>
+      <button type="button" class="btn btn-danger btn-sm" onclick="StateManager.logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main-wrapper">
+
+    <!-- Admin KPI Overview -->
+    <div class="stats-grid" style="margin-top: 1rem;">
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Published Notices</h4>
+          <div class="stat-number" id="adminStatNotices">0</div>
+        </div>
+        <div class="stat-icon-wrap stat-blue">📢</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Pending Grievances</h4>
+          <div class="stat-number" id="adminStatGrievances">0</div>
+        </div>
+        <div class="stat-icon-wrap stat-purple">🛠️</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Active Lost Items</h4>
+          <div class="stat-number" id="adminStatLostFound">0</div>
+        </div>
+        <div class="stat-icon-wrap stat-amber">🔍</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Pending Approvals</h4>
+          <div class="stat-number" id="adminStatBookings">0</div>
+        </div>
+        <div class="stat-icon-wrap stat-emerald">🏢</div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 1: NOTICES MANAGER -->
+    <!-- ============================================== -->
+    <div id="admintab-notices" class="module-content active">
+      <div class="toolbar-row">
+        <h3>Campus Announcements &amp; Notice Board</h3>
+        <button type="button" class="btn btn-primary" onclick="openModal('modalPublishNotice')">
+          + Publish New Circular / Notice
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Date</th>
+              <th>Attachment</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminNoticesTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 2: GRIEVANCES & COMPLAINTS REDRESSAL -->
+    <!-- ============================================== -->
+    <div id="admintab-grievances" class="module-content">
+      <div class="toolbar-row">
+        <h3>Student &amp; Faculty Grievance Tickets</h3>
+        <div class="filter-group">
+          <button type="button" class="filter-btn active" onclick="filterAdminGrievances('All')">All</button>
+          <button type="button" class="filter-btn" onclick="filterAdminGrievances('Submitted')">Submitted</button>
+          <button type="button" class="filter-btn" onclick="filterAdminGrievances('In Progress')">In Progress</button>
+          <button type="button" class="filter-btn" onclick="filterAdminGrievances('Resolved')">Resolved</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Title / Issue</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Urgency</th>
+              <th>Reported By</th>
+              <th>Status</th>
+              <th>Action / Resolve</th>
+            </tr>
+          </thead>
+          <tbody id="adminGrievancesTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 3: LOST & FOUND MODERATION HUB -->
+    <!-- ============================================== -->
+    <div id="admintab-lostfound" class="module-content">
+      <div class="toolbar-row">
+        <h3>Lost &amp; Found Moderation Desk</h3>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Item Name</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Reported By</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminLostFoundTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 4: FACILITY BOOKING APPROVALS -->
+    <!-- ============================================== -->
+    <div id="admintab-bookings" class="module-content">
+      <div class="toolbar-row">
+        <h3>Facility &amp; Lab Reservation Approvals</h3>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student / Faculty</th>
+              <th>Email</th>
+              <th>Facility</th>
+              <th>Date</th>
+              <th>Time Slot</th>
+              <th>Purpose</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminBookingsTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div> <!-- /main-wrapper -->
+
+  <!-- ============================================== -->
+  <!-- MODALS -->
+  <!-- ============================================== -->
+
+  <!-- Modal: Publish Notice -->
+  <div class="modal-backdrop" id="modalPublishNotice">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title">📢 Broadcast Campus Notice</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalPublishNotice')">&times;</button>
+      </div>
+      <form id="formPublishNotice" onsubmit="handlePublishNotice(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="adminNoticeTitle">Notice Title</label>
+            <input type="text" id="adminNoticeTitle" class="form-control" placeholder="e.g. Mid-Term Examination Datesheet 2026" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="adminNoticeCategory">Category</label>
+              <select id="adminNoticeCategory" class="form-control">
+                <option value="Academic">Academic</option>
+                <option value="Exams">Exams &amp; Datesheets</option>
+                <option value="Events">Events &amp; Fests</option>
+                <option value="Placement">Placement &amp; Internships</option>
+                <option value="Urgent">Emergency Alert</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="adminNoticePriority">Priority</label>
+              <select id="adminNoticePriority" class="form-control">
+                <option value="Normal">Normal</option>
+                <option value="Important">Important</option>
+                <option value="Urgent">Urgent / Critical</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="adminNoticeAuthor">Publishing Authority / Dept</label>
+            <input type="text" id="adminNoticeAuthor" class="form-control" value="Office of the Dean" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="adminNoticeContent">Detailed Notice Content</label>
+            <textarea id="adminNoticeContent" class="form-control" placeholder="Write the announcement details..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="adminNoticeAttachment">Attachment Filename (Optional)</label>
+            <input type="text" id="adminNoticeAttachment" class="form-control" placeholder="e.g. Circular_Schedule_2026.pdf">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalPublishNotice')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Publish to Campus</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Resolve Grievance -->
+  <div class="modal-backdrop" id="modalResolveGrievance">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title">🛠️ Update Grievance Ticket</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalResolveGrievance')">&times;</button>
+      </div>
+      <form id="formResolveGrievance" onsubmit="handleSaveGrievanceResolution(event)">
+        <input type="hidden" id="resolveTicketId">
+        <div class="modal-body">
+          <p id="resolveTicketTitle" style="font-weight: 700; color: var(--gray-900); margin-bottom: 1rem;"></p>
+          <div class="form-group">
+            <label class="form-label" for="resolveStatusSelect">Update Status</label>
+            <select id="resolveStatusSelect" class="form-control">
+              <option value="In Progress">In Progress (Technician Assigned)</option>
+              <option value="Resolved">Resolved (Work Completed)</option>
+              <option value="Submitted">Keep Submitted</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="resolveRemarkInput">Official Resolution Remarks</label>
+            <textarea id="resolveRemarkInput" class="form-control" placeholder="Explain the action taken or progress..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalResolveGrievance')">Cancel</button>
+          <button type="submit" class="btn btn-success">Update Ticket</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
