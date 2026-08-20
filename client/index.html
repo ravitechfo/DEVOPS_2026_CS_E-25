@@ -293,7 +293,7 @@
           <div class="form-group" id="roleGroup">
             <label class="form-label" for="roleSelect">Select Role</label>
             <select id="roleSelect" class="form-control">
-              <option value="student">Student (B.Tech / MCA / B.Sc)</option>
+              <option value="student">Student (B.Tech / MCA / B.Sc/ M.Tech)</option>
               <option value="faculty">Faculty / Department Staff</option>
               <option value="admin">Administrator / Management</option>
             </select>
@@ -331,13 +331,13 @@
     function quickLogin(role) {
       if (role === 'student') {
         StateManager.setUser({
-          name: 'Aarav Sharma',
-          email: 'aarav.sharma@campus.edu',
+          name: 'Ravi Goyal',
+          email: 'ravigoyal@campus.edu',
           role: 'student',
           department: 'Computer Science & Engineering',
-          rollNo: '22BCSE042'
+          rollNo: '24ESKCS677'
         });
-        showToast('Logged in as Student (Aarav Sharma)', 'success');
+        showToast('Logged in as Student (Ravi Goyal)', 'success');
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
       } else if (role === 'faculty') {
         StateManager.setUser({
