@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
   <style>
     .auth-page {
       min-height: 100vh;
@@ -204,7 +205,10 @@
       <div class="brand-icon">🎓</div>
       <span>Smart Campus</span>
     </a>
-    <div style="display: flex; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button type="button" class="theme-toggle-btn" onclick="ThemeManager.toggle()" aria-label="Toggle Theme">
+        <span class="theme-icon">🌙</span> <span class="theme-label">Dark</span>
+      </button>
       <a href="dashboard.html" class="btn btn-secondary btn-sm">Student Demo</a>
       <a href="admin.html" class="btn btn-primary btn-sm">Admin Demo</a>
     </div>

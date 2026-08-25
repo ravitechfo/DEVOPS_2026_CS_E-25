@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
 </head>
 <body>
 
@@ -36,6 +37,9 @@
 
     <!-- User Profile & Controls -->
     <div class="user-controls">
+      <button type="button" class="theme-toggle-btn" onclick="ThemeManager.toggle()" aria-label="Toggle Theme">
+        <span class="theme-icon">🌙</span> <span class="theme-label">Dark</span>
+      </button>
       <div class="user-badge">
         <div class="user-avatar" id="userAvatar">A</div>
         <div>

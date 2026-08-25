@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
   <style>
     .admin-navbar {
       background: #0f172a;
@@ -64,6 +65,9 @@
 
     <!-- Admin Profile & Switcher -->
     <div class="user-controls">
+      <button type="button" class="theme-toggle-btn" onclick="ThemeManager.toggle()" aria-label="Toggle Theme" style="background: #1e293b; color: #f8fafc; border-color: #334155;">
+        <span class="theme-icon">🌙</span> <span class="theme-label">Dark</span>
+      </button>
       <a href="dashboard.html" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid #475569;">
         👁️ Student View
       </a>
