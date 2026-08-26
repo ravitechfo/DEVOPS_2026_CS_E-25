@@ -292,3 +292,24 @@ window.onclick = function(e) {
     e.target.classList.remove('open');
   }
 };
+
+// Interactive 3D Parallax Tilt Effect for Admin Stat Cards
+function initCardTilt() {
+  const interactiveCards = document.querySelectorAll('.stat-card');
+  interactiveCards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      card.style.transform = `perspective(700px) rotateX(${(-y / 18).toFixed(2)}deg) rotateY(${(x / 18).toFixed(2)}deg) translateY(-5px)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initCardTilt();
+});

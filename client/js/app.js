@@ -122,12 +122,12 @@ function renderNotices() {
     return;
   }
 
-  container.innerHTML = notices.map(notice => {
+  container.innerHTML = notices.map((notice, idx) => {
     const borderClass = notice.isUrgent ? 'urgent' : notice.category ? notice.category.toLowerCase() : 'academic';
     const tagClass = notice.badgeClass || 'tag-academic';
 
     return `
-      <div class="card notice-card ${borderClass}">
+      <div class="card notice-card ${borderClass}" style="--item-index: ${idx};">
         <div class="card-meta">
           <span class="card-tag ${tagClass}">${notice.category}</span>
           <span class="card-date">📅 ${notice.date}</span>
@@ -205,14 +205,14 @@ function renderLostFound() {
     return;
   }
 
-  container.innerHTML = items.map(item => {
+  container.innerHTML = items.map((item, idx) => {
     const isLost = item.type === 'lost';
     const isClaimed = item.status === 'Claimed' || item.status === 'Resolved';
     const badgeClass = isClaimed ? 'badge-claimed' : (isLost ? 'badge-lost' : 'badge-found');
     const badgeText = isClaimed ? '✓ CLAIMED / RESOLVED' : (isLost ? '🔴 LOST' : '🟢 FOUND');
 
     return `
-      <div class="card">
+      <div class="card" style="--item-index: ${idx};">
         <div class="card-meta">
           <span class="lost-found-badge ${badgeClass}">${badgeText}</span>
           <span class="card-date">🕒 ${item.dateTime || 'Recent'}</span>
@@ -322,13 +322,13 @@ function renderComplaints() {
     return;
   }
 
-  container.innerHTML = complaints.map(c => {
+  container.innerHTML = complaints.map((c, idx) => {
     const isSubmitted = true;
     const isInProgress = c.status === 'In Progress' || c.status === 'Resolved';
     const isResolved = c.status === 'Resolved';
 
     return `
-      <div class="card">
+      <div class="card" style="--item-index: ${idx};">
         <div class="card-meta">
           <span class="card-tag tag-academic">${c.category}</span>
           <span class="status-pill ${c.status === 'Resolved' ? 'status-resolved' : c.status === 'In Progress' ? 'status-in-progress' : 'status-pending'}">
@@ -402,8 +402,8 @@ function renderFacilitiesAndBookings() {
   // Populate Resource Catalog Cards
   const resContainer = document.getElementById('resourcesContainer');
   if (resContainer) {
-    resContainer.innerHTML = resources.map(res => `
-      <div class="card" style="text-align: center;">
+    resContainer.innerHTML = resources.map((res, idx) => `
+      <div class="card" style="text-align: center; --item-index: ${idx};">
         <div style="font-size: 2.8rem; margin-bottom: 0.6rem;">${res.icon || '🏢'}</div>
         <h3 class="card-title">${res.name}</h3>
         <p style="font-size: 0.85rem; color: var(--gray-500); margin-bottom: 0.5rem;">📍 ${res.location}</p>
@@ -488,3 +488,47 @@ window.onclick = function(e) {
     e.target.classList.remove('open');
   }
 };
+
+// Scroll Reveal Observer
+function initScrollReveal() {
+  const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-scale');
+  if (!revealElements.length) return;
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+
+    revealElements.forEach(el => observer.observe(el));
+  } else {
+    revealElements.forEach(el => el.classList.add('revealed'));
+  }
+}
+
+// Interactive 3D Parallax Tilt Effect
+function initCardTilt() {
+  const interactiveCards = document.querySelectorAll('.stat-card, .feat-item');
+  interactiveCards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      card.style.transform = `perspective(700px) rotateX(${(-y / 18).toFixed(2)}deg) rotateY(${(x / 18).toFixed(2)}deg) translateY(-5px)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+}
+
+// Initialize on DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+  initScrollReveal();
+  initCardTilt();
+});
