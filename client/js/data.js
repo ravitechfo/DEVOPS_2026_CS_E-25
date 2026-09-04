@@ -180,5 +180,55 @@ const INITIAL_DATA = {
       purpose: 'Autonomous Drone Flight Test Demo',
       status: 'Pending'
     }
+  ],
+
+  subjects: [
+    { code: 'CSUL501', name: 'Design and Analysis of Algorithms (DAA)', credits: 4, type: 'Theory', attendance: '88%', faculty: 'Neetu Agrawal', room: '305', desc: 'Divide & conquer, greedy method, dynamic programming, backtracking, branch & bound, NP-completeness.' },
+    { code: 'CSUL511', name: 'Design Patterns & Principles (DPP)', credits: 3, type: 'Theory', attendance: '92%', faculty: 'Sumit Kumar', room: '305 / 405', desc: 'Creational, structural, and behavioral design patterns in modern enterprise software engineering.' },
+    { code: 'CSUL502', name: 'Machine Learning (ML)', credits: 4, type: 'Theory', attendance: '85%', faculty: 'Loveleen Kumar', room: '305', desc: 'Supervised & unsupervised learning, regression, classification, neural networks, and model evaluation.' },
+    { code: 'CSUP521', name: 'Machine Learning Lab', credits: 2, type: 'Practical Lab', attendance: '95%', faculty: 'Loveleen Kumar', room: 'Computer Lab 19 (First Floor)', desc: 'Hands-on implementation of ML algorithms using Python, Scikit-learn, and PyTorch.' },
+    { code: 'CSUP520', name: 'DAA Lab', credits: 2, type: 'Practical Lab', attendance: '90%', faculty: 'Neetu Agrawal', room: 'Computer Lab 20 (First Floor)', desc: 'Implementation and complexity benchmarking of sorting, graph traversal, and shortest path algorithms.' },
+    { code: 'CSUL503', name: 'Cryptography & Network Security (CNS)', credits: 3, type: 'Theory', attendance: '82%', faculty: 'Himani Thakur', room: '304 / 305', desc: 'Symmetric & asymmetric encryption, AES, RSA, digital signatures, hashing, and firewalls.' },
+    { code: 'CSUT530', name: 'Industrial Training & Project Mentorship', credits: 2, type: 'Training', attendance: '100%', faculty: 'Loveleen Kumar', room: '305', desc: 'Review and evaluation of industrial internships and semester capstone project milestones.' },
+    { code: 'CRT', name: 'Campus Recruitment Training (CRT)', credits: 3, type: 'Training', attendance: '91%', faculty: 'Mahender Kumar Beniwal', room: '5F:L4 / 7F:L12', desc: 'Quantitative aptitude, logical reasoning, verbal ability, and technical interview preparation.' },
+    { code: 'CEUL560.1', name: 'Climate Change & Sustainable Engineering', credits: 2, type: 'Open Elective', attendance: '80%', faculty: 'Jangid Jitender', room: '303', desc: 'Global warming impacts, carbon accounting, renewable energy transitions, and green policies.' },
+    { code: 'CSUP522', name: 'Cryptography & Security Lab', credits: 2, type: 'Practical Lab', attendance: '94%', faculty: 'Himani Thakur', room: 'Computer Lab 21', desc: 'Practical penetration testing, packet sniffing with Wireshark, and SSL/TLS configuration.' }
+  ],
+
+  // Student Timetable slots mapped by student / batch (scalable for multiple students)
+  timetables: [
+    // Monday
+    { id: 'tt-101', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'MONDAY', time: '8:15 AM-9:15 AM', startTime: '08:15', endTime: '09:15', duration: '1.0 hours', subjectCode: 'CSUL501', subjectName: 'DAA', room: '305', faculty: 'Neetu Agrawal', type: 'Theory' },
+    { id: 'tt-102', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'MONDAY', time: '9:15 AM-10:15 AM', startTime: '09:15', endTime: '10:15', duration: '1.0 hours', subjectCode: 'CSUL511', subjectName: 'DPP', room: '305', faculty: 'Sumit Kumar', type: 'Theory' },
+    { id: 'tt-103', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'MONDAY', time: '10:15 AM-11:15 AM', startTime: '10:15', endTime: '11:15', duration: '1.0 hours', subjectCode: 'CSUL502', subjectName: 'Machine Learning', room: '305', faculty: 'Loveleen Kumar', type: 'Theory' },
+    { id: 'tt-104', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'MONDAY', time: '1:00 PM-3:00 PM', startTime: '13:00', endTime: '15:00', duration: '2.0 hours', subjectCode: 'CRT', subjectName: 'CRT', room: '5F:L4', faculty: 'Mahender Kumar Beniwal', type: 'Training' },
+
+    // Tuesday
+    { id: 'tt-201', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'TUESDAY', time: '8:15 AM-9:15 AM', startTime: '08:15', endTime: '09:15', duration: '1.0 hours', subjectCode: 'CSUL503', subjectName: 'CNS', room: '304', faculty: 'Himani Thakur', type: 'Theory' },
+    { id: 'tt-202', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'TUESDAY', time: '9:15 AM-10:15 AM', startTime: '09:15', endTime: '10:15', duration: '1.0 hours', subjectCode: 'CSUL511', subjectName: 'DPP', room: '304', faculty: 'Sumit Kumar', type: 'Theory' },
+    { id: 'tt-203', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'TUESDAY', time: '10:15 AM-12:15 PM', startTime: '10:15', endTime: '12:15', duration: '2.0 hours', subjectCode: 'CRT', subjectName: 'CRT', room: '5F:L4', faculty: 'Mahender Kumar Beniwal', type: 'Training' },
+    { id: 'tt-204', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'TUESDAY', time: '1:00 PM-3:00 PM', startTime: '13:00', endTime: '15:00', duration: '2.0 hours', subjectCode: 'CSUP521', subjectName: 'Machine Learning Lab', room: 'Computer Lab 19 (First Floor)', faculty: 'Loveleen Kumar', type: 'Practical' },
+
+    // Wednesday
+    { id: 'tt-301', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'WEDNESDAY', time: '8:15 AM-10:15 AM', startTime: '08:15', endTime: '10:15', duration: '2.0 hours', subjectCode: 'CSUP520', subjectName: 'DAA Lab', room: 'Computer Lab 20 (First Floor)', faculty: 'Neetu Agrawal', type: 'Practical' },
+    { id: 'tt-302', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'WEDNESDAY', time: '10:15 AM-11:15 AM', startTime: '10:15', endTime: '11:15', duration: '1.0 hours', subjectCode: 'CSUL511', subjectName: 'DPP', room: '405', faculty: 'Sumit Kumar', type: 'Theory' },
+    { id: 'tt-303', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'WEDNESDAY', time: '1:00 PM-3:00 PM', startTime: '13:00', endTime: '15:00', duration: '2.0 hours', subjectCode: 'CSUL502', subjectName: 'Machine Learning', room: '305', faculty: 'Loveleen Kumar', type: 'Theory' },
+
+    // Thursday
+    { id: 'tt-401', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'THURSDAY', time: '8:15 AM-9:15 AM', startTime: '08:15', endTime: '09:15', duration: '1.0 hours', subjectCode: 'CSUL501', subjectName: 'DAA', room: '305', faculty: 'Neetu Agrawal', type: 'Theory' },
+    { id: 'tt-402', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'THURSDAY', time: '9:15 AM-10:15 AM', startTime: '09:15', endTime: '10:15', duration: '1.0 hours', subjectCode: 'CSUL503', subjectName: 'CNS', room: '305', faculty: 'Himani Thakur', type: 'Theory' },
+    { id: 'tt-403', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'THURSDAY', time: '10:15 AM-11:15 AM', startTime: '10:15', endTime: '11:15', duration: '1.0 hours', subjectCode: 'CSUT530', subjectName: 'Industrial Training', room: '305', faculty: 'Loveleen Kumar', type: 'Training' },
+    { id: 'tt-404', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'THURSDAY', time: '12:00 PM-2:00 PM', startTime: '12:00', endTime: '14:00', duration: '2.0 hours', subjectCode: 'CRT', subjectName: 'CRT', room: '7F:L12', faculty: 'Mahender Kumar Beniwal', type: 'Training' },
+    { id: 'tt-405', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'THURSDAY', time: '2:00 PM-3:00 PM', startTime: '14:00', endTime: '15:00', duration: '1.0 hours', subjectCode: 'CEUL560.1', subjectName: 'Climate Change', room: '303', faculty: 'Jangid Jitender', type: 'Elective' },
+
+    // Friday
+    { id: 'tt-501', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'FRIDAY', time: '8:15 AM-9:15 AM', startTime: '08:15', endTime: '09:15', duration: '1.0 hours', subjectCode: 'CSUL503', subjectName: 'CNS', room: '305', faculty: 'Himani Thakur', type: 'Theory' },
+    { id: 'tt-502', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'FRIDAY', time: '9:15 AM-10:15 AM', startTime: '09:15', endTime: '10:15', duration: '1.0 hours', subjectCode: 'CSUL501', subjectName: 'DAA', room: '305', faculty: 'Neetu Agrawal', type: 'Theory' },
+    { id: 'tt-503', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'FRIDAY', time: '10:15 AM-11:15 AM', startTime: '10:15', endTime: '11:15', duration: '1.0 hours', subjectCode: 'CSUL502', subjectName: 'Machine Learning', room: '305', faculty: 'Loveleen Kumar', type: 'Theory' },
+    { id: 'tt-504', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'FRIDAY', time: '1:00 PM-3:00 PM', startTime: '13:00', endTime: '15:00', duration: '2.0 hours', subjectCode: 'CSUP522', subjectName: 'CNS Lab', room: 'Computer Lab 21', faculty: 'Himani Thakur', type: 'Practical' },
+
+    // Saturday
+    { id: 'tt-601', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'SATURDAY', time: '9:15 AM-11:15 AM', startTime: '09:15', endTime: '11:15', duration: '2.0 hours', subjectCode: 'CSUT530', subjectName: 'Capstone Project Review', room: 'Seminar Hall 2', faculty: 'Dr. R. K. Sharma', type: 'Training' },
+    { id: 'tt-602', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'SATURDAY', time: '11:30 AM-1:30 PM', startTime: '11:30', endTime: '13:30', duration: '2.0 hours', subjectCode: 'CRT', subjectName: 'CRT Mock Assessment', room: '5F:L4', faculty: 'Mahender Kumar Beniwal', type: 'Training' }
   ]
 };

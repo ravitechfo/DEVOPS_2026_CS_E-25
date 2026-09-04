@@ -52,6 +52,9 @@
       <button type="button" class="nav-tab-btn active" onclick="switchAdminTab('notices')">
         📢 <span>Notices</span>
       </button>
+      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('timetable')">
+        📅 <span>Time Table</span>
+      </button>
       <button type="button" class="nav-tab-btn" onclick="switchAdminTab('grievances')">
         🛠️ <span>Grievance Desk</span>
       </button>
@@ -141,6 +144,38 @@
             </tr>
           </thead>
           <tbody id="adminNoticesTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB: TIMETABLE & CLASS SCHEDULE MANAGEMENT    -->
+    <!-- ============================================== -->
+    <div id="admintab-timetable" class="module-content">
+      <div class="toolbar-row">
+        <h3>Class Timetable &amp; Schedule Management</h3>
+        <button type="button" class="btn btn-primary" onclick="openModal('modalAddTimetableSlot')">
+          + Add Lecture / Lab Slot
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Time Slot</th>
+              <th>Duration</th>
+              <th>Subject Code &amp; Name</th>
+              <th>Room / Lab</th>
+              <th>Faculty</th>
+              <th>Section / Batch</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminTimetableTableBody">
             <!-- Rendered dynamically -->
           </tbody>
         </table>
@@ -325,6 +360,103 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="closeModal('modalResolveGrievance')">Cancel</button>
           <button type="submit" class="btn btn-success">Update Ticket</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Lecture / Lab Slot -->
+  <div class="modal-backdrop" id="modalAddTimetableSlot">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title">📅 Add New Timetable Slot</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalAddTimetableSlot')">&times;</button>
+      </div>
+      <form id="formAddTimetableSlot" onsubmit="handleCreateTimetableSlot(event)">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="slotDay">Day of Week</label>
+              <select id="slotDay" class="form-control" required>
+                <option value="MONDAY">MONDAY</option>
+                <option value="TUESDAY">TUESDAY</option>
+                <option value="WEDNESDAY">WEDNESDAY</option>
+                <option value="THURSDAY">THURSDAY</option>
+                <option value="FRIDAY">FRIDAY</option>
+                <option value="SATURDAY">SATURDAY</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="slotSection">Target Section / Batch</label>
+              <select id="slotSection" class="form-control" required>
+                <option value="5th Sem - CSE (Sec A)">5th Sem - CSE (Sec A)</option>
+                <option value="5th Sem - CSE (Sec B)">5th Sem - CSE (Sec B)</option>
+                <option value="3rd Sem - CSE (Sec A)">3rd Sem - CSE (Sec A)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="slotSubjectCode">Subject Code</label>
+              <input type="text" id="slotSubjectCode" class="form-control" placeholder="e.g. CSUL501" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="slotSubjectName">Subject Title</label>
+              <input type="text" id="slotSubjectName" class="form-control" placeholder="e.g. DAA" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="slotTimeRange">Time Slot Display</label>
+              <input type="text" id="slotTimeRange" class="form-control" placeholder="e.g. 8:15 AM-9:15 AM" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="slotDuration">Duration</label>
+              <select id="slotDuration" class="form-control" required>
+                <option value="1.0 hours">1.0 hours</option>
+                <option value="2.0 hours">2.0 hours</option>
+                <option value="1.5 hours">1.5 hours</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="slotStartTime">Start Time (24hr HH:MM)</label>
+              <input type="time" id="slotStartTime" class="form-control" value="08:15" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="slotEndTime">End Time (24hr HH:MM)</label>
+              <input type="time" id="slotEndTime" class="form-control" value="09:15" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="slotRoom">Room / Lab Location</label>
+              <input type="text" id="slotRoom" class="form-control" placeholder="e.g. 305 or Computer Lab 19" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="slotFaculty">Faculty Name</label>
+              <input type="text" id="slotFaculty" class="form-control" placeholder="e.g. Prof. Neetu Agrawal" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="slotType">Session Type</label>
+            <select id="slotType" class="form-control">
+              <option value="Theory">Theory Lecture</option>
+              <option value="Practical">Practical Lab</option>
+              <option value="Training">Campus Recruitment / Industrial Training</option>
+              <option value="Elective">Open Elective</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalAddTimetableSlot')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Slot</button>
         </div>
       </form>
     </div>

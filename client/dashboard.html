@@ -24,6 +24,9 @@
       <button type="button" class="nav-tab-btn active" onclick="switchModule('notices')">
         📢 <span>Notice Board</span>
       </button>
+      <button type="button" class="nav-tab-btn" onclick="switchModule('timetable')">
+        📅 <span>Time Table</span>
+      </button>
       <button type="button" class="nav-tab-btn" onclick="switchModule('lostfound')">
         🔍 <span>Lost &amp; Found</span>
       </button>
@@ -114,6 +117,61 @@
       </div>
 
       <div class="grid-cards" id="noticesContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODULE: STUDENT ACADEMIC TIME TABLE (ERP)      -->
+    <!-- ============================================== -->
+    <div id="module-timetable" class="module-content">
+      <!-- Live Ongoing / Upcoming Class Alert -->
+      <div id="ttLiveAlert" class="tt-hero-alert" style="display: none;">
+        <div class="tt-live-info">
+          <span class="tt-live-badge" id="ttLiveBadge">🔴 Happening Now</span>
+          <div class="tt-live-details">
+            <h4 id="ttLiveSubject">CSUL501 - DAA</h4>
+            <p id="ttLiveSubtext">Room 305 • Faculty: Neetu Agrawal • 8:15 AM - 9:15 AM</p>
+          </div>
+        </div>
+        <div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openLiveSubjectDetails()">View Course Details</button>
+        </div>
+      </div>
+
+      <!-- Controls & Filters -->
+      <div class="tt-controls-row">
+        <div class="tt-day-tabs" id="ttDayTabs">
+          <button type="button" class="tt-day-btn active" onclick="filterTimetableDay('ALL')">🗓️ Full Week</button>
+          <button type="button" class="tt-day-btn" onclick="filterTimetableDay('TODAY')">⚡ Today</button>
+          <button type="button" class="tt-day-btn" onclick="filterTimetableDay('MONDAY')">Mon</button>
+          <button type="button" class="tt-day-btn" onclick="filterTimetableDay('TUESDAY')">Tue</button>
+          <button type="button" class="tt-day-btn" onclick="filterTimetableDay('WEDNESDAY')">Wed</button>
+          <button type="button" class="tt-day-btn" onclick="filterTimetableDay('THURSDAY')">Thu</button>
+          <button type="button" class="tt-day-btn" onclick="filterTimetableDay('FRIDAY')">Fri</button>
+          <button type="button" class="tt-day-btn" onclick="filterTimetableDay('SATURDAY')">Sat</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <select id="ttSectionSelect" class="tt-section-select" onchange="handleTimetableSectionChange()">
+            <option value="5th Sem - CSE (Sec A)">5th Sem - CSE (Sec A)</option>
+            <option value="5th Sem - CSE (Sec B)">5th Sem - CSE (Sec B)</option>
+            <option value="3rd Sem - CSE (Sec A)">3rd Sem - CSE (Sec A)</option>
+          </select>
+
+          <div class="search-box" style="margin-bottom: 0;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="ttSearchInput" placeholder="Search subject or faculty..." oninput="handleTimetableSearch()">
+          </div>
+
+          <button type="button" class="btn btn-secondary" onclick="window.print()" title="Print Timetable or Save PDF">
+            🖨️ Print Timetable
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Weekly Board -->
+      <div class="timetable-board" id="timetableContainer">
         <!-- Rendered dynamically -->
       </div>
     </div>
@@ -437,6 +495,52 @@
           <button type="submit" class="btn btn-primary">Submit Booking Request</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Subject Details & Faculty Information -->
+  <div class="modal-backdrop" id="modalSubjectDetails">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <span id="subjectCodePill" class="role-pill role-faculty" style="font-size: 0.78rem;">CSUL501</span>
+          <h4 class="modal-title" id="subjectDetailName" style="margin-top: 4px;">Design and Analysis of Algorithms</h4>
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('modalSubjectDetails')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.25rem;">
+          <div style="background: var(--bg-subtle); padding: 10px 14px; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">FACULTY INCHARGE</div>
+            <div id="subjectFacultyName" style="font-weight: 700; color: var(--text-primary); margin-top: 2px;">Prof. Neetu Agrawal</div>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 10px 14px; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">CLASSROOM / LAB</div>
+            <div id="subjectRoomNumber" style="font-weight: 700; color: var(--text-primary); margin-top: 2px;">Room 305</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.25rem;">
+          <div style="background: var(--bg-subtle); padding: 10px 14px; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">COURSE CREDITS & TYPE</div>
+            <div id="subjectCredits" style="font-weight: 700; color: var(--text-primary); margin-top: 2px;">4 Credits (Theory)</div>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 10px 14px; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">MY ATTENDANCE</div>
+            <div id="subjectAttendance" style="font-weight: 800; color: var(--success); margin-top: 2px;">88% (Eligible)</div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0.5rem;">
+          <label class="form-label" style="font-weight: 700;">Course Description & Syllabus Outline</label>
+          <div id="subjectDescription" style="padding: 12px; background: var(--bg-subtle); border-radius: var(--radius-sm); font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary);">
+            Divide &amp; conquer, greedy method, dynamic programming, backtracking, branch &amp; bound, and NP-completeness.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalSubjectDetails')">Close</button>
+      </div>
     </div>
   </div>
 

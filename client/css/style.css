@@ -1148,3 +1148,335 @@ textarea.form-control {
     grid-template-columns: 1fr;
   }
 }
+
+/* ======================================================= */
+/* 📅 ERP STUDENT TIME TABLE MODULE STYLES                 */
+/* ======================================================= */
+
+.tt-hero-alert {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(79, 70, 229, 0.12) 100%);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+[data-theme="dark"] .tt-hero-alert {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(79, 70, 229, 0.2) 100%);
+  border-color: rgba(14, 165, 233, 0.4);
+}
+
+.tt-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: pulseLive 2s infinite;
+}
+
+@keyframes pulseLive {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.tt-live-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tt-live-details h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.tt-live-details p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.tt-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tt-day-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tt-day-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.tt-day-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.tt-day-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+}
+
+.tt-section-select {
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Timetable Matrix Grid */
+.timetable-board {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+  overflow-x: auto;
+}
+
+.tt-day-section {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 0;
+  gap: 1.25rem;
+}
+
+.tt-day-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0.5rem;
+}
+
+.tt-day-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--primary);
+}
+
+.tt-day-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.tt-day-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.tt-slots-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* Teal ERP Card (Exact reference design) */
+.tt-slot-card {
+  background: #009688;
+  background: linear-gradient(145deg, #00897b 0%, #009688 60%, #26a69a 100%);
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  min-width: 175px;
+  flex: 1 1 180px;
+  max-width: 250px;
+  box-shadow: 0 4px 12px rgba(0, 150, 136, 0.25);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.tt-slot-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 10px 20px rgba(0, 150, 136, 0.4);
+}
+
+.tt-slot-card.slot-2hours {
+  flex: 2 1 270px;
+  max-width: 380px;
+  background: linear-gradient(145deg, #00796b 0%, #00897b 60%, #009688 100%);
+}
+
+.tt-slot-card.slot-lab {
+  border-left: 4px solid #facc15;
+}
+
+.tt-slot-card.slot-ongoing {
+  outline: 3px solid #f59e0b;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+  animation: cardPulse 2.5s infinite;
+}
+
+@keyframes cardPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+  50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.9); }
+}
+
+.tt-card-top {
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  padding-bottom: 6px;
+}
+
+.tt-time {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #ffffff;
+  display: block;
+}
+
+.tt-duration {
+  font-size: 0.72rem;
+  text-decoration: underline;
+  opacity: 0.92;
+  font-weight: 500;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.tt-card-body {
+  text-align: center;
+  padding: 4px 0;
+}
+
+.tt-subject-link {
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  display: block;
+  line-height: 1.3;
+}
+
+.tt-card-bottom {
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 6px;
+  font-size: 0.78rem;
+}
+
+.tt-room {
+  font-weight: 700;
+  opacity: 0.95;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.tt-faculty {
+  font-size: 0.75rem;
+  text-decoration: underline;
+  opacity: 0.9;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty Day State */
+.tt-empty-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  width: 100%;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .navbar, .user-controls, .toolbar-row, .btn, .theme-toggle-btn, .tt-controls-row, .stats-grid, .hero-banner {
+    display: none !important;
+  }
+  .main-wrapper {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  .timetable-board {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .tt-slot-card {
+    background: #009688 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color: #fff !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .tt-day-section {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .tt-day-header {
+    border-left: none;
+    border-top: 3px solid var(--primary);
+  }
+  .tt-slot-card {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
+

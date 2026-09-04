@@ -28,6 +28,7 @@ function switchAdminTab(tabName) {
 
 function renderAdminAll() {
   renderAdminNotices();
+  renderAdminTimetable();
   renderAdminGrievances();
   renderAdminLostFound();
   renderAdminBookings();
@@ -114,6 +115,73 @@ function handleDeleteNotice(id) {
     showToast('Notice removed.', 'warning');
     renderAdminNotices();
     updateAdminStats();
+  }
+}
+
+// ==========================================
+// 📅 ADMIN TIMETABLE MANAGEMENT
+// ==========================================
+function renderAdminTimetable() {
+  const tbody = document.getElementById('adminTimetableTableBody');
+  if (!tbody) return;
+
+  const slots = StateManager.getTimetable();
+
+  if (slots.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--gray-500);">No timetable slots configured yet. Click "+ Add Lecture / Lab Slot" to add.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = slots.map(slot => {
+    return `
+      <tr>
+        <td><strong>${slot.day}</strong></td>
+        <td>${slot.time}</td>
+        <td><span class="role-pill role-student" style="font-size: 0.72rem;">${slot.duration || '1.0 hours'}</span></td>
+        <td>
+          <div style="font-weight: 700; color: var(--text-primary);">${slot.subjectCode}</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">${slot.subjectName}</div>
+        </td>
+        <td>${slot.room}</td>
+        <td>${slot.faculty}</td>
+        <td><span style="font-size: 0.8rem; color: var(--text-secondary);">${slot.section || '5th Sem - CSE (Sec A)'}</span></td>
+        <td>
+          <button type="button" class="btn btn-danger btn-sm" onclick="handleDeleteTimetableSlot('${slot.id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function handleCreateTimetableSlot(e) {
+  e.preventDefault();
+
+  const newSlot = {
+    day: document.getElementById('slotDay').value,
+    section: document.getElementById('slotSection').value,
+    subjectCode: document.getElementById('slotSubjectCode').value.trim().toUpperCase(),
+    subjectName: document.getElementById('slotSubjectName').value.trim(),
+    time: document.getElementById('slotTimeRange').value.trim(),
+    duration: document.getElementById('slotDuration').value,
+    startTime: document.getElementById('slotStartTime').value,
+    endTime: document.getElementById('slotEndTime').value,
+    room: document.getElementById('slotRoom').value.trim(),
+    faculty: document.getElementById('slotFaculty').value.trim(),
+    type: document.getElementById('slotType').value
+  };
+
+  StateManager.addTimetableSlot(newSlot);
+  showToast('Timetable lecture slot added successfully!', 'success');
+  closeModal('modalAddTimetableSlot');
+  document.getElementById('formAddTimetableSlot').reset();
+  renderAdminTimetable();
+}
+
+function handleDeleteTimetableSlot(id) {
+  if (confirm('Are you sure you want to delete this lecture slot?')) {
+    StateManager.deleteTimetableSlot(id);
+    showToast('Timetable slot deleted.', 'warning');
+    renderAdminTimetable();
   }
 }
 

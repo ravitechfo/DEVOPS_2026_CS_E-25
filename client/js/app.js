@@ -5,6 +5,10 @@ let currentNoticeSearch = '';
 let currentLFFilter = 'All';
 let currentLFSearch = '';
 let currentComplaintFilter = 'All';
+let currentTimetableDay = 'ALL';
+let currentTimetableSearch = '';
+let currentTimetableSection = '5th Sem - CSE (Sec A)';
+let activeLiveSubjectCode = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initUserProfile();
@@ -46,7 +50,7 @@ function switchModule(moduleName) {
   const buttons = document.querySelectorAll('.nav-tab-btn');
   buttons.forEach(btn => btn.classList.remove('active'));
   
-  const targetBtn = Array.from(buttons).find(b => b.onclick.toString().includes(moduleName));
+  const targetBtn = Array.from(buttons).find(b => b.onclick && b.onclick.toString().includes(moduleName));
   if (targetBtn) targetBtn.classList.add('active');
 
   // Update content sections
@@ -60,6 +64,7 @@ function switchModule(moduleName) {
 // Render All Modules & Stats
 function renderAllModules() {
   renderNotices();
+  renderTimetable();
   renderLostFound();
   renderComplaints();
   renderFacilitiesAndBookings();
@@ -165,6 +170,228 @@ function openNoticeModal(id) {
   }
 
   openModal('modalNoticeView');
+}
+
+// ==========================================
+// 📅 STUDENT ACADEMIC TIME TABLE MODULE
+// ==========================================
+const WEEK_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+function filterTimetableDay(day) {
+  currentTimetableDay = day;
+  const buttons = document.querySelectorAll('#ttDayTabs .tt-day-btn');
+  buttons.forEach(btn => {
+    if (day === 'ALL' && btn.innerText.includes('Full Week')) {
+      btn.classList.add('active');
+    } else if (day === 'TODAY' && btn.innerText.includes('Today')) {
+      btn.classList.add('active');
+    } else if (btn.innerText.toUpperCase().startsWith(day.substring(0, 3))) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+  renderTimetable();
+}
+
+function handleTimetableSearch() {
+  currentTimetableSearch = document.getElementById('ttSearchInput').value.toLowerCase().trim();
+  renderTimetable();
+}
+
+function handleTimetableSectionChange() {
+  const select = document.getElementById('ttSectionSelect');
+  if (select) {
+    currentTimetableSection = select.value;
+  }
+  renderTimetable();
+}
+
+function renderTimetable() {
+  const container = document.getElementById('timetableContainer');
+  if (!container) return;
+
+  const user = StateManager.getUser();
+  let allSlots = StateManager.getTimetable({ section: currentTimetableSection });
+  
+  // Also update live lecture alert
+  detectLiveLecture(allSlots);
+
+  // Determine which days to display
+  let daysToDisplay = WEEK_DAYS;
+  const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+  if (currentTimetableDay === 'TODAY') {
+    daysToDisplay = WEEK_DAYS.includes(todayName) ? [todayName] : ['MONDAY'];
+  } else if (currentTimetableDay !== 'ALL') {
+    daysToDisplay = [currentTimetableDay];
+  }
+
+  // Filter slots by search query
+  if (currentTimetableSearch) {
+    allSlots = allSlots.filter(s => 
+      s.subjectCode.toLowerCase().includes(currentTimetableSearch) ||
+      s.subjectName.toLowerCase().includes(currentTimetableSearch) ||
+      s.faculty.toLowerCase().includes(currentTimetableSearch) ||
+      s.room.toLowerCase().includes(currentTimetableSearch)
+    );
+  }
+
+  // Group slots by Day
+  let html = '';
+  daysToDisplay.forEach(day => {
+    const daySlots = allSlots.filter(s => s.day.toUpperCase() === day);
+    
+    // Sort slots by start time
+    daySlots.sort((a, b) => (a.startTime || a.time).localeCompare(b.startTime || b.time));
+
+    const isToday = day === todayName;
+
+    html += `
+      <div class="tt-day-section">
+        <div class="tt-day-header">
+          <div class="tt-day-title">${day}</div>
+          <div class="tt-day-sub">${isToday ? '⚡ Today' : daySlots.length + ' Classes'}</div>
+        </div>
+        <div class="tt-slots-container">
+    `;
+
+    if (daySlots.length === 0) {
+      html += `
+        <div class="tt-empty-day">
+          <span>☕ No classes or lab sessions scheduled for ${day.toLowerCase()}.</span>
+        </div>
+      `;
+    } else {
+      html += daySlots.map(slot => {
+        const is2Hours = slot.duration && slot.duration.includes('2.0');
+        const isLab = slot.type === 'Practical' || slot.subjectName.toLowerCase().includes('lab');
+        const isOngoing = checkIsSlotOngoing(slot);
+
+        const cardClasses = [
+          'tt-slot-card',
+          is2Hours ? 'slot-2hours' : '',
+          isLab ? 'slot-lab' : '',
+          isOngoing ? 'slot-ongoing' : ''
+        ].filter(Boolean).join(' ');
+
+        return `
+          <div class="${cardClasses}" onclick="openSubjectDetails('${slot.subjectCode}')" title="Click to view subject & faculty details">
+            <div class="tt-card-top">
+              <span class="tt-time">${slot.time}</span>
+              <span class="tt-duration">${slot.duration || '1.0 hours'}</span>
+            </div>
+            <div class="tt-card-body">
+              <a href="javascript:void(0)" class="tt-subject-link">${slot.subjectCode} - ${slot.subjectName}</a>
+            </div>
+            <div class="tt-card-bottom">
+              <span class="tt-room">${slot.room}</span>
+              <span class="tt-faculty">${slot.faculty}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    html += `
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// Detect ongoing or next upcoming class based on real-time clock
+function checkIsSlotOngoing(slot) {
+  const now = new Date();
+  const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+  if (slot.day.toUpperCase() !== currentDay) return false;
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  
+  if (slot.startTime && slot.endTime) {
+    const [startH, startM] = slot.startTime.split(':').map(Number);
+    const [endH, endM] = slot.endTime.split(':').map(Number);
+    const slotStartMin = startH * 60 + startM;
+    const slotEndMin = endH * 60 + endM;
+    return currentMinutes >= slotStartMin && currentMinutes < slotEndMin;
+  }
+  return false;
+}
+
+function detectLiveLecture(slots) {
+  const alertEl = document.getElementById('ttLiveAlert');
+  if (!alertEl) return;
+
+  const now = new Date();
+  const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+  const todaySlots = slots.filter(s => s.day.toUpperCase() === currentDay);
+
+  if (todaySlots.length === 0) {
+    alertEl.style.display = 'none';
+    return;
+  }
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  let ongoingSlot = null;
+  let nextSlot = null;
+
+  for (const slot of todaySlots) {
+    if (slot.startTime && slot.endTime) {
+      const [startH, startM] = slot.startTime.split(':').map(Number);
+      const [endH, endM] = slot.endTime.split(':').map(Number);
+      const startMin = startH * 60 + startM;
+      const endMin = endH * 60 + endM;
+
+      if (currentMinutes >= startMin && currentMinutes < endMin) {
+        ongoingSlot = slot;
+        break;
+      } else if (currentMinutes < startMin && (!nextSlot || startMin < nextSlot.startMin)) {
+        nextSlot = { ...slot, startMin };
+      }
+    }
+  }
+
+  if (ongoingSlot) {
+    activeLiveSubjectCode = ongoingSlot.subjectCode;
+    alertEl.style.display = 'flex';
+    document.getElementById('ttLiveBadge').innerText = '🔴 Happening Now';
+    document.getElementById('ttLiveBadge').style.background = '#ef4444';
+    document.getElementById('ttLiveSubject').innerText = `${ongoingSlot.subjectCode} - ${ongoingSlot.subjectName}`;
+    document.getElementById('ttLiveSubtext').innerText = `Room: ${ongoingSlot.room} • Faculty: ${ongoingSlot.faculty} • Time: ${ongoingSlot.time}`;
+  } else if (nextSlot) {
+    activeLiveSubjectCode = nextSlot.subjectCode;
+    alertEl.style.display = 'flex';
+    const diff = nextSlot.startMin - currentMinutes;
+    document.getElementById('ttLiveBadge').innerText = diff <= 60 ? `⏳ Next in ${diff}m` : '📅 Upcoming Today';
+    document.getElementById('ttLiveBadge').style.background = '#0ea5e9';
+    document.getElementById('ttLiveSubject').innerText = `${nextSlot.subjectCode} - ${nextSlot.subjectName}`;
+    document.getElementById('ttLiveSubtext').innerText = `Room: ${nextSlot.room} • Faculty: ${nextSlot.faculty} • Time: ${nextSlot.time}`;
+  } else {
+    // Show first morning lecture of today or none
+    alertEl.style.display = 'none';
+  }
+}
+
+function openLiveSubjectDetails() {
+  if (activeLiveSubjectCode) {
+    openSubjectDetails(activeLiveSubjectCode);
+  }
+}
+
+function openSubjectDetails(subjectCode) {
+  const details = StateManager.getSubjectDetails(subjectCode);
+  
+  document.getElementById('subjectCodePill').innerText = details.code;
+  document.getElementById('subjectDetailName').innerText = details.name;
+  document.getElementById('subjectFacultyName').innerText = details.faculty || 'Faculty Incharge';
+  document.getElementById('subjectRoomNumber').innerText = details.room || 'Department Classroom';
+  document.getElementById('subjectCredits').innerText = `${details.credits || 3} Credits (${details.type || 'Theory'})`;
+  document.getElementById('subjectAttendance').innerText = `${details.attendance || '88%'} (Good Standing)`;
+  document.getElementById('subjectDescription').innerText = details.desc || 'Complete syllabus and session plan available on university ERP.';
+
+  openModal('modalSubjectDetails');
 }
 
 // ==========================================

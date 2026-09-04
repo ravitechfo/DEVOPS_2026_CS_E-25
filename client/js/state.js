@@ -6,6 +6,8 @@ const StateManager = {
     COMPLAINTS: 'smart_campus_complaints',
     BOOKINGS: 'smart_campus_bookings',
     RESOURCES: 'smart_campus_resources',
+    TIMETABLE: 'smart_campus_timetable',
+    SUBJECTS: 'smart_campus_subjects',
     USER: 'smart_campus_user'
   },
 
@@ -24,6 +26,12 @@ const StateManager = {
     }
     if (!localStorage.getItem(this.KEYS.BOOKINGS)) {
       localStorage.setItem(this.KEYS.BOOKINGS, JSON.stringify(INITIAL_DATA.bookings));
+    }
+    if (!localStorage.getItem(this.KEYS.TIMETABLE)) {
+      localStorage.setItem(this.KEYS.TIMETABLE, JSON.stringify(INITIAL_DATA.timetables));
+    }
+    if (!localStorage.getItem(this.KEYS.SUBJECTS)) {
+      localStorage.setItem(this.KEYS.SUBJECTS, JSON.stringify(INITIAL_DATA.subjects));
     }
   },
 
@@ -169,6 +177,71 @@ const StateManager = {
       target.status = status;
       localStorage.setItem(this.KEYS.BOOKINGS, JSON.stringify(bookings));
     }
+  },
+
+  // Timetable State Operations (Scalable by student / section)
+  getTimetable(filterOpts = {}) {
+    let slots = JSON.parse(localStorage.getItem(this.KEYS.TIMETABLE) || '[]');
+    if (!slots || slots.length === 0) {
+      slots = INITIAL_DATA.timetables || [];
+      localStorage.setItem(this.KEYS.TIMETABLE, JSON.stringify(slots));
+    }
+    if (filterOpts.day && filterOpts.day !== 'ALL') {
+      slots = slots.filter(s => s.day.toUpperCase() === filterOpts.day.toUpperCase());
+    }
+    if (filterOpts.studentEmail) {
+      slots = slots.filter(s => !s.studentEmail || s.studentEmail === filterOpts.studentEmail);
+    }
+    if (filterOpts.section) {
+      slots = slots.filter(s => !s.section || s.section === filterOpts.section);
+    }
+    return slots;
+  },
+
+  addTimetableSlot(slot) {
+    const slots = this.getTimetable();
+    const newSlot = {
+      id: 'tt-' + Date.now(),
+      ...slot
+    };
+    slots.push(newSlot);
+    localStorage.setItem(this.KEYS.TIMETABLE, JSON.stringify(slots));
+    return newSlot;
+  },
+
+  updateTimetableSlot(id, updatedFields) {
+    const slots = this.getTimetable();
+    const idx = slots.findIndex(s => s.id === id);
+    if (idx !== -1) {
+      slots[idx] = { ...slots[idx], ...updatedFields };
+      localStorage.setItem(this.KEYS.TIMETABLE, JSON.stringify(slots));
+      return slots[idx];
+    }
+    return null;
+  },
+
+  deleteTimetableSlot(id) {
+    let slots = this.getTimetable();
+    slots = slots.filter(s => s.id !== id);
+    localStorage.setItem(this.KEYS.TIMETABLE, JSON.stringify(slots));
+  },
+
+  getSubjects() {
+    return JSON.parse(localStorage.getItem(this.KEYS.SUBJECTS) || JSON.stringify(INITIAL_DATA.subjects));
+  },
+
+  getSubjectDetails(code) {
+    const subjects = this.getSubjects();
+    return subjects.find(s => s.code.toLowerCase() === code.toLowerCase()) || {
+      code,
+      name: code,
+      credits: 3,
+      type: 'Core Academic Course',
+      attendance: '85%',
+      faculty: 'Faculty Incharge',
+      room: 'Main Academic Wing',
+      desc: 'Syllabus and study materials available on campus LMS.'
+    };
   }
 };
 
