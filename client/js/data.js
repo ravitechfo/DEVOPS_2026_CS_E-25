@@ -230,5 +230,9 @@ const INITIAL_DATA = {
     // Saturday
     { id: 'tt-601', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'SATURDAY', time: '9:15 AM-11:15 AM', startTime: '09:15', endTime: '11:15', duration: '2.0 hours', subjectCode: 'CSUT530', subjectName: 'Capstone Project Review', room: 'Seminar Hall 2', faculty: 'Dr. R. K. Sharma', type: 'Training' },
     { id: 'tt-602', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'SATURDAY', time: '11:30 AM-1:30 PM', startTime: '11:30', endTime: '13:30', duration: '2.0 hours', subjectCode: 'CRT', subjectName: 'CRT Mock Assessment', room: '5F:L4', faculty: 'Mahender Kumar Beniwal', type: 'Training' }
-  ]
+  ],
+
+  attendance: [] // Empty by default; populated when student pastes ERP attendance
 };
+
+

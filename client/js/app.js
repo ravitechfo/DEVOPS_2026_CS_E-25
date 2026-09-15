@@ -2,6 +2,8 @@
 
 let currentNoticeFilter = 'All';
 let currentNoticeSearch = '';
+let currentAttendanceFilter = 'All';
+let currentAttendanceSearch = '';
 let currentLFFilter = 'All';
 let currentLFSearch = '';
 let currentComplaintFilter = 'All';
@@ -64,6 +66,7 @@ function switchModule(moduleName) {
 // Render All Modules & Stats
 function renderAllModules() {
   renderNotices();
+  renderAttendance();
   renderTimetable();
   renderLostFound();
   renderComplaints();
@@ -76,11 +79,25 @@ function updateStats() {
   const lostFound = StateManager.getLostFound();
   const complaints = StateManager.getComplaints();
   const bookings = StateManager.getBookings();
+  const overallStats = StateManager.calculateOverallStats();
 
   document.getElementById('statNoticeCount').innerText = notices.length;
   document.getElementById('statLostCount').innerText = lostFound.length;
   document.getElementById('statComplaintCount').innerText = complaints.filter(c => c.status !== 'Resolved').length;
   document.getElementById('statBookingCount').innerText = bookings.length;
+
+  const attPercentEl = document.getElementById('statAttendancePercent');
+  const attSubEl = document.getElementById('statAttendanceSubtitle');
+  if (attPercentEl && attSubEl) {
+    attPercentEl.innerText = `${overallStats.overallPercentage}%`;
+    if (overallStats.isOverallSafe) {
+      attSubEl.innerText = `🟢 Safe (${overallStats.totalSafeBunks} Bunks Left)`;
+      attSubEl.style.color = 'var(--success)';
+    } else {
+      attSubEl.innerText = `🔴 Shortage (${overallStats.dangerCount} Subjects < 75%)`;
+      attSubEl.style.color = 'var(--danger)';
+    }
+  }
 }
 
 // ==========================================
@@ -696,6 +713,497 @@ function handleCreateBooking(e) {
   document.getElementById('formBookFacility').reset();
   renderFacilitiesAndBookings();
   updateStats();
+}
+
+// ==========================================
+// SMART ATTENDANCE SETTLEMENT & BUNK MANAGER
+// ==========================================
+function filterAttendance(type) {
+  currentAttendanceFilter = type;
+  const filterBtns = document.querySelectorAll('#attFilterGroup .filter-btn');
+  filterBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.innerText.includes(type) || (type === 'All' && btn.innerText === 'All Subjects'));
+  });
+  renderAttendance();
+}
+
+function handleAttendanceSearch() {
+  currentAttendanceSearch = document.getElementById('attSearchInput').value.toLowerCase().trim();
+  renderAttendance();
+}
+
+function renderAttendance() {
+  const container = document.getElementById('attendanceContainer');
+  const heroContainer = document.getElementById('attSummaryHero');
+  if (!container) return;
+
+  const attendanceList = StateManager.getAttendance();
+  const overall = StateManager.calculateOverallStats();
+
+  // If no attendance data yet -> Show Setup / Paste CTA State
+  if (overall.isEmpty || attendanceList.length === 0) {
+    if (heroContainer) heroContainer.style.display = 'none';
+
+    container.innerHTML = `
+      <div class="att-empty-setup-card" style="grid-column: 1 / -1;">
+        <div class="att-empty-icon">📊</div>
+        <h3>Set Up Your Attendance Tracker</h3>
+        <p>
+          Koi fake ya hardcoded data load nahi kiya gaya hai. Apne College ERP (CollPoll / iCloudEMS / TCS iON / Webkiosk) se attendance table copy karke direct paste karein ya manually enter karein.
+        </p>
+        
+        <div class="att-empty-actions">
+          <button type="button" class="btn btn-primary btn-lg" onclick="openModal('modalBulkAttendance')">
+            ⚡ Paste ERP Attendance Table
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="openAddAttendanceModal()">
+            + Add Subject Manually
+          </button>
+          <button type="button" class="btn btn-subtle" onclick="loadSampleErpDemoData()" title="Quick load sample subjects to test">
+            🧪 Load Sample Demo Data
+          </button>
+        </div>
+
+        <div class="att-preview-hint">
+          <strong>Tip / Supported Formats:</strong><br>
+          Direct table copy from ERP portal, Excel copy, or CSV line format: <code>CSUL501, Design and Analysis of Algorithms, 22, 25</code>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Show Hero Banner
+  if (heroContainer) heroContainer.style.display = 'flex';
+
+  // 1. Update Hero Aggregate Summary View
+  const percentValEl = document.getElementById('attOverallPercent');
+  const circleBar = document.getElementById('attOverallCircle');
+  const heroTitle = document.getElementById('attHeroTitle');
+  const heroDesc = document.getElementById('attHeroDesc');
+  const heroStatusPill = document.getElementById('attHeroStatusPill');
+
+  if (percentValEl && circleBar) {
+    percentValEl.innerText = `${overall.overallPercentage}%`;
+    
+    // Circle radius = 50, Circumference = 2 * PI * 50 = ~314.16
+    const circumference = 314.16;
+    const offset = circumference - ((Math.min(overall.overallPercentage, 100) / 100) * circumference);
+    circleBar.style.strokeDashoffset = offset;
+
+    if (overall.anySimulated) {
+      const sign = overall.deltaOverallPercent >= 0 ? '+' : '';
+      circleBar.className = overall.overallPercentage < 75 ? 'att-circle-bar danger' : 'att-circle-bar safe';
+      heroStatusPill.className = 'att-status-pill simulated';
+      heroStatusPill.innerHTML = `<span>⚡ Settlement Simulator Active (Original: ${overall.origOverallPercentage}%)</span>`;
+      heroTitle.innerText = `Projected Attendance: ${overall.overallPercentage}% (${sign}${overall.deltaOverallPercent}%)`;
+      heroDesc.innerHTML = `You are testing "What-If" scenarios on your subjects. <strong><a href="javascript:void(0)" onclick="handleResetAllSimulations()" style="color: var(--primary); text-decoration: underline;">Click here to Reset All to Original ERP baseline</a></strong>.`;
+    } else if (overall.overallPercentage < 75) {
+      circleBar.className = 'att-circle-bar danger';
+      heroStatusPill.className = 'att-status-pill danger';
+      heroStatusPill.innerHTML = `<span>🔴 Attendance Shortage Alert (&lt; 75%)</span>`;
+      heroTitle.innerText = `Attention! ${overall.dangerCount} Subject(s) Below 75% Cutoff`;
+      heroDesc.innerHTML = `You need to attend a total of <strong>${overall.totalNeedToAttend} more classes</strong> straight to regain university examination eligibility.`;
+    } else {
+      circleBar.className = 'att-circle-bar safe';
+      heroStatusPill.className = 'att-status-pill safe';
+      heroStatusPill.innerHTML = `<span>🟢 Safe Zone (Above 75% Criteria)</span>`;
+      heroTitle.innerText = `Great Job! Attendance is comfortably safe.`;
+      heroDesc.innerHTML = `You have <strong>${overall.totalSafeBunks} safe bunks</strong> remaining across your courses without dropping below the 75% eligibility cutoff.`;
+    }
+  }
+
+  // Mini stats update
+  const statAttEl = document.getElementById('attStatAttended');
+  const statTotalCoursesEl = document.getElementById('attStatTotalCourses');
+  const statSafeBunksEl = document.getElementById('attStatSafeBunks');
+  const statShortageEl = document.getElementById('attStatShortageCount');
+
+  if (statAttEl) statAttEl.innerText = `${overall.totalAttended} / ${overall.totalClasses}`;
+  if (statTotalCoursesEl) statTotalCoursesEl.innerText = `${overall.totalSubjects} Subjects`;
+  if (statSafeBunksEl) statSafeBunksEl.innerText = `🔥 ${overall.totalSafeBunks} Bunks`;
+  if (statShortageEl) statShortageEl.innerText = overall.dangerCount > 0 ? `⚠️ ${overall.dangerCount} Subjects` : `✓ 0 Shortage`;
+
+  // 2. Filter & Search Subjects
+  let filtered = attendanceList.filter(item => {
+    const stats = StateManager.calculateSubjectStats(item);
+    const matchesFilter = currentAttendanceFilter === 'All' ||
+      (currentAttendanceFilter === 'Danger' && !stats.isSafe) ||
+      (currentAttendanceFilter === 'Safe' && stats.isSafe);
+
+    const matchesSearch = !currentAttendanceSearch ||
+      item.subjectName.toLowerCase().includes(currentAttendanceSearch) ||
+      item.subjectCode.toLowerCase().includes(currentAttendanceSearch) ||
+      (item.faculty && item.faculty.toLowerCase().includes(currentAttendanceSearch));
+
+    return matchesFilter && matchesSearch;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state-box" style="grid-column: 1 / -1;">
+        <span>🔍</span>
+        <p>No subjects found matching your filters. Click <strong>"+ Add Subject"</strong> or <strong>"⚡ Paste ERP Table"</strong> to add subjects.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // 3. Render Subject Cards with Settlement Simulation & Reset
+  container.innerHTML = filtered.map(sub => {
+    const stats = StateManager.calculateSubjectStats(sub);
+
+    // Build Advisor Message
+    let advisorHtml = '';
+    if (sub.total === 0) {
+      advisorHtml = `<div class="att-advisor-box safe">✨ 0 classes held yet. Ready for start!</div>`;
+    } else if (stats.isSafe) {
+      if (stats.safeBunks > 0) {
+        advisorHtml = `<div class="att-advisor-box safe">🎉 Safe to bunk <strong>${stats.safeBunks} ${stats.safeBunks === 1 ? 'class' : 'classes'}</strong> and stay &ge; 75%.</div>`;
+      } else {
+        advisorHtml = `<div class="att-advisor-box warning">⚖️ On edge (75%)! Do not miss the next class.</div>`;
+      }
+    } else {
+      advisorHtml = `<div class="att-advisor-box danger">⚠️ Danger! Attend next <strong>${stats.classesToAttend} ${stats.classesToAttend === 1 ? 'class' : 'classes'} straight</strong> to reach 75%.</div>`;
+    }
+
+    const percentageColor = stats.statusClass === 'danger' ? 'var(--danger)' : stats.statusClass === 'warning' ? 'var(--warning)' : 'var(--success)';
+
+    // Simulation info badge
+    let simulationInfo = '';
+    if (stats.isSimulated) {
+      const sign = stats.deltaPercent >= 0 ? '+' : '';
+      simulationInfo = `
+        <div class="att-sim-badge">
+          <span>⚡ Simulated: <strong>${stats.simulatedAttended}/${stats.simulatedTotal}</strong> (${stats.percentage}%)</span>
+          <span class="att-sim-diff ${stats.deltaPercent >= 0 ? 'pos' : 'neg'}">${sign}${stats.deltaPercent}%</span>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="att-card ${stats.isSimulated ? 'is-simulated' : ''}" id="att-card-${sub.id}">
+        <div>
+          <div class="att-card-header">
+            <div>
+              <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 4px;">
+                <span class="att-card-code">${sub.subjectCode}</span>
+                ${stats.isSimulated ? '<span class="att-sim-pill">Simulating</span>' : ''}
+              </div>
+              <h4 class="att-card-title">${sub.subjectName}</h4>
+              <div class="att-card-faculty">👨‍🏫 ${sub.faculty || 'Faculty Incharge'}</div>
+            </div>
+            <span class="att-card-badge ${stats.statusClass}">${stats.statusLabel}</span>
+          </div>
+
+          <div style="margin-top: 1.15rem;">
+            <div class="att-metrics-row">
+              <div class="att-percentage" style="color: ${percentageColor};">${stats.percentage}%</div>
+              <div class="att-counts">
+                ${stats.isSimulated ? `<span style="text-decoration: line-through; opacity: 0.6; font-size: 0.78rem;">${stats.origAttended}/${stats.origTotal}</span> ` : ''}
+                ${stats.simulatedAttended} / ${stats.simulatedTotal} Classes
+              </div>
+            </div>
+
+            <div class="att-bar-container">
+              <div class="att-bar-fill ${stats.statusClass}" style="width: ${Math.min(stats.percentage, 100)}%;"></div>
+              <div class="att-bar-target-line" title="Mandatory 75% Cutoff"></div>
+            </div>
+
+            ${simulationInfo}
+          </div>
+        </div>
+
+        <div>
+          ${advisorHtml}
+
+          <!-- Settlement Simulation Controls -->
+          <div class="att-actions-row">
+            <button type="button" class="btn-att-present" onclick="handleSimulate('${sub.id}', 'attend_more')" title="Simulate attending next class (+1 Attended, +1 Total)">
+              <span>+ Attend</span>
+            </button>
+            <button type="button" class="btn-att-absent" onclick="handleSimulate('${sub.id}', 'bunk_more')" title="Simulate missing / bunking next class (+1 Total only)">
+              <span>+ Bunk</span>
+            </button>
+            
+            ${stats.isSimulated ? `
+              <button type="button" class="btn-icon-subtle reset active" onclick="handleResetSubject('${sub.id}')" title="Reset this subject back to original ERP data">
+                ↺
+              </button>
+            ` : `
+              <button type="button" class="btn-icon-subtle" onclick="openAddAttendanceModal('${sub.id}')" title="Edit course details">
+                ✏️
+              </button>
+            `}
+
+            <button type="button" class="btn-icon-subtle delete" onclick="deleteAttendanceCourse('${sub.id}')" title="Delete subject">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Simulation Actions (+Attend / +Bunk)
+function handleSimulate(id, actionType) {
+  const updated = StateManager.simulateSubject(id, actionType);
+  if (updated) {
+    const stats = StateManager.calculateSubjectStats(updated);
+    const sign = stats.deltaPercent >= 0 ? '+' : '';
+    if (actionType === 'attend_more') {
+      showToast(`Simulated +1 Attended for ${updated.subjectCode} (${stats.percentage}%, ${sign}${stats.deltaPercent}%)`, 'success');
+    } else {
+      showToast(`Simulated +1 Bunk for ${updated.subjectCode} (${stats.percentage}%, ${sign}${stats.deltaPercent}%)`, 'error');
+    }
+    renderAttendance();
+    updateStats();
+  }
+}
+
+// Reset single subject back to original ERP baseline
+function handleResetSubject(id) {
+  const updated = StateManager.resetSubjectSimulation(id);
+  if (updated) {
+    showToast(`Reset ${updated.subjectCode} to original ERP baseline (${updated.attended}/${updated.total})`, 'info');
+    renderAttendance();
+    updateStats();
+  }
+}
+
+// Reset all simulations to original ERP baseline
+function handleResetAllSimulations() {
+  StateManager.resetAllSimulations();
+  showToast('Reset all subjects back to original ERP baseline!', 'info');
+  renderAttendance();
+  updateStats();
+}
+
+// Clear all attendance data to start fresh
+function handleClearAllAttendance() {
+  if (confirm('Are you sure you want to clear all attendance data and re-import from scratch?')) {
+    StateManager.clearAllAttendance();
+    showToast('Attendance data cleared. Ready for fresh import.', 'info');
+    renderAttendance();
+    updateStats();
+  }
+}
+
+// Load sample realistic ERP demo dataset for 1-click test
+function loadSampleErpDemoData() {
+  const sampleData = [
+    { subjectCode: 'CSUL501', subjectName: 'Design and Analysis of Algorithms (DAA)', attended: 22, total: 25, target: 75, faculty: 'Prof. Neetu Agrawal' },
+    { subjectCode: 'CSUL502', subjectName: 'Machine Learning (ML)', attended: 17, total: 24, target: 75, faculty: 'Prof. Loveleen Kumar' },
+    { subjectCode: 'CSUL503', subjectName: 'Cryptography & Network Security (CNS)', attended: 14, total: 20, target: 75, faculty: 'Prof. Himani Thakur' },
+    { subjectCode: 'CSUL511', subjectName: 'Design Patterns & Principles (DPP)', attended: 23, total: 25, target: 75, faculty: 'Prof. Sumit Kumar' },
+    { subjectCode: 'CSUP521', subjectName: 'Machine Learning Lab', attended: 10, total: 10, target: 75, faculty: 'Prof. Loveleen Kumar' },
+    { subjectCode: 'CRT', subjectName: 'Campus Recruitment Training (CRT)', attended: 18, total: 20, target: 75, faculty: 'Prof. Mahender Beniwal' }
+  ];
+  StateManager.importErpAttendance(sampleData, true);
+  showToast('Loaded 6 sample semester courses into tracker!', 'success');
+  renderAttendance();
+  updateStats();
+}
+
+// Open Add or Edit Modal
+function openAddAttendanceModal(editId = null) {
+  const form = document.getElementById('formAddAttendance');
+  const title = document.getElementById('attModalTitle');
+  const submitBtn = document.getElementById('attSubmitBtn');
+  const editIdInput = document.getElementById('attEditId');
+
+  form.reset();
+
+  if (editId) {
+    const list = StateManager.getAttendance();
+    const item = list.find(s => s.id === editId);
+    if (item) {
+      editIdInput.value = item.id;
+      document.getElementById('attSubjectCode').value = item.subjectCode;
+      document.getElementById('attSubjectName').value = item.subjectName;
+      document.getElementById('attAttendedCount').value = item.originalAttended !== undefined ? item.originalAttended : item.attended;
+      document.getElementById('attTotalCount').value = item.originalTotal !== undefined ? item.originalTotal : item.total;
+      document.getElementById('attTargetPercent').value = item.target || 75;
+      document.getElementById('attFacultyName').value = item.faculty || '';
+      
+      title.innerText = `✏️ Edit Course Attendance`;
+      submitBtn.innerText = `Update Course`;
+    }
+  } else {
+    editIdInput.value = '';
+    title.innerText = `📊 Add Course Attendance`;
+    submitBtn.innerText = `Save Course`;
+    document.getElementById('attTargetPercent').value = 75;
+  }
+
+  openModal('modalAddAttendance');
+}
+
+// Save Subject from Form
+function handleSaveAttendanceSubject(e) {
+  e.preventDefault();
+  const editId = document.getElementById('attEditId').value;
+  const subjectData = {
+    subjectCode: document.getElementById('attSubjectCode').value.trim().toUpperCase(),
+    subjectName: document.getElementById('attSubjectName').value.trim(),
+    attended: parseInt(document.getElementById('attAttendedCount').value) || 0,
+    total: parseInt(document.getElementById('attTotalCount').value) || 0,
+    target: parseInt(document.getElementById('attTargetPercent').value) || 75,
+    faculty: document.getElementById('attFacultyName').value.trim()
+  };
+
+  if (subjectData.attended > subjectData.total) {
+    subjectData.total = subjectData.attended;
+  }
+
+  if (editId) {
+    StateManager.updateAttendance(editId, subjectData);
+    showToast(`Updated ${subjectData.subjectCode} details!`, 'success');
+  } else {
+    StateManager.addAttendance(subjectData);
+    showToast(`Added ${subjectData.subjectCode} to tracker!`, 'success');
+  }
+
+  closeModal('modalAddAttendance');
+  renderAttendance();
+  updateStats();
+}
+
+// Delete Course
+function deleteAttendanceCourse(id) {
+  const list = StateManager.getAttendance();
+  const target = list.find(s => s.id === id);
+  const name = target ? target.subjectCode : 'Subject';
+
+  if (confirm(`Are you sure you want to remove "${name}" from your Attendance tracker?`)) {
+    StateManager.deleteAttendance(id);
+    showToast(`Removed ${name}`, 'info');
+    renderAttendance();
+    updateStats();
+  }
+}
+
+// Intelligent Raw ERP Parser & Importer
+function parseErpRawText(rawText) {
+  const lines = rawText.split('\n');
+  const parsedSubjects = [];
+
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line || line.length < 3) return;
+
+    // Ignore header rows
+    if (line.toLowerCase().includes('subject code') || line.toLowerCase().includes('attendance %') || line.toLowerCase().includes('total classes')) {
+      return;
+    }
+
+    // Delimited parsing (Tab, Comma, Pipe)
+    let parts = [];
+    if (line.includes('\t')) {
+      parts = line.split('\t').map(p => p.trim()).filter(Boolean);
+    } else if (line.includes(',')) {
+      parts = line.split(',').map(p => p.trim()).filter(Boolean);
+    } else if (line.includes('|')) {
+      parts = line.split('|').map(p => p.trim()).filter(Boolean);
+    }
+
+    if (parts.length >= 3) {
+      // Find numbers in parts (attended & total)
+      const numbers = [];
+      const nonNumbers = [];
+
+      parts.forEach(p => {
+        // Check if pattern like "18/24"
+        if (p.includes('/')) {
+          const slashParts = p.split('/').map(s => parseInt(s)).filter(n => !isNaN(n));
+          if (slashParts.length >= 2) {
+            numbers.push(slashParts[0], slashParts[1]);
+            return;
+          }
+        }
+        // Check if pure integer (ignore % values)
+        if (!p.includes('%') && /^\d+$/.test(p)) {
+          numbers.push(parseInt(p));
+        } else if (!p.includes('%')) {
+          nonNumbers.push(p);
+        }
+      });
+
+      if (numbers.length >= 2) {
+        const attended = numbers[0];
+        const total = numbers[1];
+        const code = nonNumbers[0] || ('SUB-' + Math.floor(100 + Math.random() * 900));
+        const name = nonNumbers.length > 1 ? nonNumbers.slice(1).join(' ') : nonNumbers[0] || code;
+
+        parsedSubjects.push({
+          subjectCode: code.toUpperCase(),
+          subjectName: name,
+          attended,
+          total,
+          target: 75,
+          faculty: 'Faculty Incharge'
+        });
+        return;
+      }
+    }
+
+    // Fallback: Regex scan line for "CODE NAME ATTENDED TOTAL" or "NAME: ATTENDED/TOTAL"
+    // e.g. "CSUL501 DAA 22 25" or "Machine Learning: 17/24"
+    const slashMatch = line.match(/([A-Za-z0-9\s\-]+?)[:\s]+(\d+)\s*\/\s*(\d+)/);
+    if (slashMatch) {
+      const name = slashMatch[1].trim();
+      const attended = parseInt(slashMatch[2]);
+      const total = parseInt(slashMatch[3]);
+      parsedSubjects.push({
+        subjectCode: name.split(' ')[0].toUpperCase(),
+        subjectName: name,
+        attended,
+        total,
+        target: 75,
+        faculty: 'Faculty Incharge'
+      });
+      return;
+    }
+
+    // Numbers at end of string
+    const endNumbersMatch = line.match(/^(.+?)\s+(\d+)\s+(\d+)(?:\s+[\d\.]+%)?$/);
+    if (endNumbersMatch) {
+      const name = endNumbersMatch[1].trim();
+      const attended = parseInt(endNumbersMatch[2]);
+      const total = parseInt(endNumbersMatch[3]);
+      parsedSubjects.push({
+        subjectCode: name.split(' ')[0].toUpperCase(),
+        subjectName: name,
+        attended,
+        total,
+        target: 75,
+        faculty: 'Faculty Incharge'
+      });
+    }
+  });
+
+  return parsedSubjects;
+}
+
+// Handle ERP Import Submit
+function handleBulkImportAttendance(e) {
+  e.preventDefault();
+  const text = document.getElementById('bulkAttendanceText').value.trim();
+  if (!text) return;
+
+  const parsedSubjects = parseErpRawText(text);
+
+  if (parsedSubjects.length > 0) {
+    StateManager.importErpAttendance(parsedSubjects, true);
+    showToast(`Successfully parsed and imported ${parsedSubjects.length} courses from your ERP!`, 'success');
+    closeModal('modalBulkAttendance');
+    document.getElementById('formBulkAttendance').reset();
+    renderAttendance();
+    updateStats();
+  } else {
+    showToast('Could not extract attendance numbers. Please check format (e.g. CSUL501, DAA, 22, 25)', 'error');
+  }
 }
 
 // Modal Helpers

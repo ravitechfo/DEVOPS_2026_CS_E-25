@@ -24,6 +24,9 @@
       <button type="button" class="nav-tab-btn active" onclick="switchModule('notices')">
         📢 <span>Notice Board</span>
       </button>
+      <button type="button" class="nav-tab-btn" onclick="switchModule('attendance')">
+        📊 <span>Attendance &amp; Bunks</span>
+      </button>
       <button type="button" class="nav-tab-btn" onclick="switchModule('timetable')">
         📅 <span>Time Table</span>
       </button>
@@ -61,12 +64,20 @@
     <div class="hero-banner">
       <h1 class="hero-title" id="welcomeTitle">Welcome to Smart Campus</h1>
       <p class="hero-subtitle">
-        Stay updated with university circulars, report lost belongings, raise campus maintenance requests, and reserve university labs &amp; seminar halls seamlessly.
+        Track your 75% attendance criteria &amp; safe bunks, stay updated with university circulars, report lost belongings, and reserve university labs seamlessly.
       </p>
     </div>
 
     <!-- KPI Stat Counters -->
     <div class="stats-grid">
+      <div class="stat-card" style="cursor: pointer;" onclick="switchModule('attendance')">
+        <div class="stat-info">
+          <h4>My Attendance</h4>
+          <div class="stat-number" id="statAttendancePercent">--%</div>
+          <div id="statAttendanceSubtitle" style="font-size: 0.76rem; font-weight: 700; margin-top: 3px; color: var(--success);">Loading...</div>
+        </div>
+        <div class="stat-icon-wrap stat-blue">📊</div>
+      </div>
       <div class="stat-card">
         <div class="stat-info">
           <h4>Active Notices</h4>
@@ -118,6 +129,89 @@
 
       <div class="grid-cards" id="noticesContainer">
         <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODULE: SMART ATTENDANCE & BUNK TRACKER (ATTENDIFY) -->
+    <!-- ============================================== -->
+    <div id="module-attendance" class="module-content">
+      <!-- Attendance Aggregate Overview Banner -->
+      <div class="att-summary-hero" id="attSummaryHero">
+        <div class="att-summary-main">
+          <div class="att-circle-wrap">
+            <svg class="att-circle-svg" viewBox="0 0 120 120">
+              <circle class="att-circle-bg" cx="60" cy="60" r="50"></circle>
+              <circle class="att-circle-bar" id="attOverallCircle" cx="60" cy="60" r="50" style="stroke-dasharray: 314; stroke-dashoffset: 45;"></circle>
+            </svg>
+            <div class="att-circle-text">
+              <span class="att-circle-val" id="attOverallPercent">85.4%</span>
+              <span class="att-circle-sub">Overall</span>
+            </div>
+          </div>
+          <div class="att-hero-info">
+            <div class="att-status-pill safe" id="attHeroStatusPill">
+              <span>🟢 Safe Zone (Above 75% Criteria)</span>
+            </div>
+            <h3 id="attHeroTitle">Keep it up! Your attendance is solid.</h3>
+            <p id="attHeroDesc">
+              You can afford to bunk <strong>8 more classes</strong> safely across your courses without dropping below the mandatory 75% university eligibility cutoff.
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick Summary Stats Pill Grid -->
+        <div class="att-stats-strip">
+          <div class="att-mini-stat">
+            <span class="att-mini-label">Total Attended</span>
+            <span class="att-mini-val" id="attStatAttended">115 / 135</span>
+          </div>
+          <div class="att-mini-stat">
+            <span class="att-mini-label">Total Courses</span>
+            <span class="att-mini-val" id="attStatTotalCourses">7 Subjects</span>
+          </div>
+          <div class="att-mini-stat text-success">
+            <span class="att-mini-label">Safe Bunks Left</span>
+            <span class="att-mini-val" id="attStatSafeBunks">🔥 8 Bunks</span>
+          </div>
+          <div class="att-mini-stat text-danger">
+            <span class="att-mini-label">Shortage Courses</span>
+            <span class="att-mini-val" id="attStatShortageCount">⚠️ 0 Subjects</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & Actions Toolbar -->
+      <div class="toolbar-row" style="margin-top: 1.5rem;">
+        <div class="filter-group" id="attFilterGroup">
+          <button type="button" class="filter-btn active" onclick="filterAttendance('All')">All Subjects</button>
+          <button type="button" class="filter-btn" onclick="filterAttendance('Danger')">🔴 Danger Zone (&lt; 75%)</button>
+          <button type="button" class="filter-btn" onclick="filterAttendance('Safe')">🟢 Safe Zone (≥ 75%)</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <div class="search-box" style="margin-bottom: 0;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="attSearchInput" placeholder="Search subject or code..." oninput="handleAttendanceSearch()">
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="handleResetAllSimulations()" title="Reset all simulations to original ERP baseline">
+            ↺ Reset Simulations
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="openModal('modalBulkAttendance')">
+            ⚡ Paste ERP Table
+          </button>
+          <button type="button" class="btn btn-primary" onclick="openAddAttendanceModal()">
+            + Add Subject
+          </button>
+          <button type="button" class="btn btn-icon-subtle delete" onclick="handleClearAllAttendance()" title="Clear and re-import fresh ERP data">
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      <!-- Subject Cards Grid -->
+      <div class="att-grid-cards" id="attendanceContainer">
+        <!-- Rendered dynamically via JavaScript -->
       </div>
     </div>
 
@@ -541,6 +635,86 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeModal('modalSubjectDetails')">Close</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Attendance Course -->
+  <div class="modal-backdrop" id="modalAddAttendance">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title" id="attModalTitle">📊 Add Course Attendance</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalAddAttendance')">&times;</button>
+      </div>
+      <form id="formAddAttendance" onsubmit="handleSaveAttendanceSubject(event)">
+        <input type="hidden" id="attEditId" value="">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="attSubjectCode">Course / Subject Code</label>
+              <input type="text" id="attSubjectCode" class="form-control" placeholder="e.g. CSUL501" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="attTargetPercent">Target Percentage (%)</label>
+              <input type="number" id="attTargetPercent" class="form-control" value="75" min="50" max="100" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="attSubjectName">Course Name</label>
+            <input type="text" id="attSubjectName" class="form-control" placeholder="e.g. Design and Analysis of Algorithms" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="attAttendedCount">Attended Classes</label>
+              <input type="number" id="attAttendedCount" class="form-control" placeholder="e.g. 18" min="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="attTotalCount">Total Classes Held</label>
+              <input type="number" id="attTotalCount" class="form-control" placeholder="e.g. 24" min="0" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="attFacultyName">Faculty / Professor Name (Optional)</label>
+            <input type="text" id="attFacultyName" class="form-control" placeholder="e.g. Prof. Neetu Agrawal">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalAddAttendance')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="attSubmitBtn">Save Course</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Quick ERP Attendance Table Paste & Auto-Import -->
+  <div class="modal-backdrop" id="modalBulkAttendance">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title">⚡ Quick ERP Copy-Paste Import</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalBulkAttendance')">&times;</button>
+      </div>
+      <form id="formBulkAttendance" onsubmit="handleBulkImportAttendance(event)">
+        <div class="modal-body">
+          <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+            Copy-paste your attendance row/table text directly from your College ERP portal (e.g. Subject Name, Attended, Total). Or type comma-separated lines.
+          </p>
+          <div style="background: var(--bg-subtle); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 0.75rem; font-size: 0.8rem; font-family: monospace; color: var(--text-muted);">
+            Format Example:<br>
+            CSUL501, Algorithms, 22, 25<br>
+            CSUL502, Machine Learning, 17, 24<br>
+            CSUL503, Cryptography, 14, 20
+          </div>
+          <div class="form-group">
+            <textarea id="bulkAttendanceText" class="form-control" rows="6" placeholder="Paste ERP text or CSV here..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalBulkAttendance')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Parse &amp; Import</button>
+        </div>
+      </form>
     </div>
   </div>
 
