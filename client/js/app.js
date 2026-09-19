@@ -21,14 +21,100 @@ document.addEventListener('DOMContentLoaded', () => {
 // Profile & Header Init
 function initUserProfile() {
   const user = StateManager.getUser();
-  document.getElementById('navUserName').innerText = user.name || 'Campus Student';
-  document.getElementById('userAvatar').innerText = (user.name || 'S').charAt(0).toUpperCase();
+  const isSkitDomain = StateManager.isInstitutionalDomain(user.email);
+  const isVerified = user.isVerified || isSkitDomain;
+
+  document.getElementById('navUserName').innerText = user.name || 'SKIT Student';
+  document.getElementById('userAvatar').innerText = (user.name || 'R').charAt(0).toUpperCase();
   
   const roleEl = document.getElementById('navUserRole');
   roleEl.innerText = (user.role || 'STUDENT').toUpperCase();
   roleEl.className = `role-pill role-${user.role || 'student'}`;
   
-  document.getElementById('welcomeTitle').innerText = `Welcome back, ${user.name || 'Student'} 👋`;
+  // Verification Badge in Nav
+  const verifBadge = document.getElementById('navVerificationBadge');
+  if (verifBadge) {
+    if (isVerified) {
+      verifBadge.innerText = '🛡️ SKIT VERIFIED';
+      verifBadge.className = 'status-pill status-approved';
+      verifBadge.style.display = 'inline-block';
+    } else if (user.verificationStatus === 'Rejected') {
+      verifBadge.innerText = '✕ UNVERIFIED';
+      verifBadge.className = 'status-pill status-rejected';
+      verifBadge.style.display = 'inline-block';
+    } else {
+      verifBadge.innerText = '⏳ PENDING REVIEW';
+      verifBadge.className = 'status-pill status-pending';
+      verifBadge.style.display = 'inline-block';
+    }
+  }
+
+  // Hero section badge
+  const collegeNameEl = document.getElementById('heroCollegeName');
+  if (collegeNameEl) collegeNameEl.innerText = '🎓 ' + (user.collegeName || 'SKIT Jaipur');
+  
+  const studentRollEl = document.getElementById('heroStudentRoll');
+  if (studentRollEl) studentRollEl.innerText = `Roll: ${user.rollNo || '24ESKCS677'} | ${user.department || 'CSE'}`;
+
+  document.getElementById('welcomeTitle').innerText = `Welcome back, ${user.name || 'User'} 👋`;
+
+  // Role-Based UI Customization (Hide Attendance for Faculty / Admin)
+  const isStudent = (user.role === 'student' || !user.role);
+  const attendanceNavBtn = document.getElementById('navTabAttendance');
+  const attendanceStatCard = document.getElementById('statCardAttendance');
+  const heroSubtitle = document.getElementById('heroSubtitle');
+
+  if (!isStudent) {
+    // Hide Attendance Tab and Stat Card for Faculty & Admin
+    if (attendanceNavBtn) attendanceNavBtn.style.display = 'none';
+    if (attendanceStatCard) attendanceStatCard.style.display = 'none';
+
+    if (heroSubtitle) {
+      heroSubtitle.innerText = user.role === 'faculty'
+        ? 'Access departmental timetables, official circulars, report campus grievances, and book seminar halls.'
+        : 'Access student view preview, circular broadcasts, and campus resource management.';
+    }
+
+    // If currently on attendance tab, switch to notices
+    const activeBtn = document.querySelector('.nav-tab-btn.active');
+    if (activeBtn && activeBtn.onclick && activeBtn.onclick.toString().includes('attendance')) {
+      switchModule('notices');
+    }
+  } else {
+    if (attendanceNavBtn) attendanceNavBtn.style.display = 'flex';
+    if (attendanceStatCard) attendanceStatCard.style.display = 'block';
+  }
+
+  // Dynamic Verification Alert Banner
+  const alertBanner = document.getElementById('studentVerificationAlert');
+  if (alertBanner) {
+    if (isVerified || !isStudent) {
+      alertBanner.style.display = 'none';
+    } else if (user.verificationStatus === 'Rejected') {
+      alertBanner.style.display = 'flex';
+      alertBanner.style.background = 'var(--danger-light)';
+      alertBanner.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+      alertBanner.style.color = 'var(--danger-text)';
+      document.getElementById('verifAlertIcon').innerText = '⚠️';
+      document.getElementById('verifAlertHeading').innerText = 'SKIT Institutional Verification Rejected';
+      document.getElementById('verifAlertMsg').innerText = 'Your submitted ID proof could not be validated by the SKIT Admin Desk. Please re-upload your valid College ID Card or contact admin.';
+      document.getElementById('verifAlertActions').innerHTML = `
+        <a href="index.html" class="btn btn-danger btn-sm">Re-Submit ID</a>
+      `;
+    } else {
+      // Pending
+      alertBanner.style.display = 'flex';
+      alertBanner.style.background = 'var(--warning-light)';
+      alertBanner.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+      alertBanner.style.color = 'var(--warning-text)';
+      document.getElementById('verifAlertIcon').innerText = '⏳';
+      document.getElementById('verifAlertHeading').innerText = 'SKIT Student ID Verification Under Review';
+      document.getElementById('verifAlertMsg').innerText = `You logged in with '${user.email}'. Your verification request for Roll No: ${user.rollNo || '24ESKCS112'} has been submitted to SKIT Admin Desk.`;
+      document.getElementById('verifAlertActions').innerHTML = `
+        <span class="status-pill status-pending">In Admin Queue</span>
+      `;
+    }
+  }
 
   // Prefill contact names in modals if available
   const lostContactName = document.getElementById('lostContactName');
@@ -48,6 +134,15 @@ function setupDatePicker() {
 
 // Module Navigation Tabs
 function switchModule(moduleName) {
+  const user = StateManager.getUser();
+  const isStudent = (user.role === 'student' || !user.role);
+
+  // Prevent non-students from switching into attendance module
+  if (moduleName === 'attendance' && !isStudent) {
+    showToast('Attendance tracking is only available for Students.', 'warning');
+    moduleName = 'notices';
+  }
+
   // Update nav buttons
   const buttons = document.querySelectorAll('.nav-tab-btn');
   buttons.forEach(btn => btn.classList.remove('active'));

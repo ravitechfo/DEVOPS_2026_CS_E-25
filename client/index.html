@@ -301,25 +301,76 @@
         <!-- 1-Click Presentation Demo Logins -->
         <div class="quick-login-box">
           <h6>⚡ 1-Click Presentation Demo</h6>
-          <div class="demo-buttons">
-            <button type="button" class="btn-demo" onclick="quickLogin('student')">👨‍🎓 Student</button>
-            <button type="button" class="btn-demo" onclick="quickLogin('faculty')">👩‍🏫 Faculty</button>
-            <button type="button" class="btn-demo" onclick="quickLogin('admin')">🛡️ Admin</button>
+          <div class="demo-buttons" style="grid-template-columns: 1fr 1fr;">
+            <button type="button" class="btn-demo" onclick="quickLogin('skit_student')">🛡️ SKIT Verified Student</button>
+            <button type="button" class="btn-demo" onclick="quickLogin('admin')">👑 SKIT Admin Desk</button>
+            <button type="button" class="btn-demo" onclick="quickLogin('unverified_student')">⏳ Pending Gmail Student</button>
+            <button type="button" class="btn-demo" onclick="quickLogin('faculty')">👩‍🏫 SKIT Faculty</button>
           </div>
         </div>
 
-        <div class="divider"><span>OR SIGN IN WITH EMAIL</span></div>
+        <div class="divider"><span>OR SIGN IN / REGISTER WITH EMAIL</span></div>
 
         <!-- Form -->
         <form id="authForm">
           <div class="form-group" id="nameGroup" style="display: none;">
             <label class="form-label" for="nameInput">Full Name</label>
-            <input type="text" id="nameInput" class="form-control" placeholder="e.g. Aarav Sharma">
+            <input type="text" id="nameInput" class="form-control" placeholder="e.g. Ravi Goyal">
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="emailInput">Campus Email</label>
-            <input type="email" id="emailInput" class="form-control" placeholder="name@campus.edu" value="student@campus.edu" required>
+            <label class="form-label" for="emailInput">Student / Campus Email</label>
+            <input type="email" id="emailInput" class="form-control" placeholder="24eskcs677@skit.ac.in" value="24eskcs677@skit.ac.in" oninput="handleEmailInput(this.value)" required>
+            
+            <!-- Live Verification Domain Status Indicator -->
+            <div id="domainStatusBox" style="margin-top: 6px; padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 8px; background: var(--success-light); color: var(--success-text); border: 1px solid rgba(16, 185, 129, 0.3);">
+              <span>🛡️</span>
+              <span id="domainStatusText">Verified SKIT Institutional Domain (@skit.ac.in) — FastTrack Access</span>
+            </div>
+          </div>
+
+          <!-- Non-Institutional Verification Section (Expands if non-skit domain in Registration Mode) -->
+          <div id="idVerificationSection" style="display: none; background: rgba(79, 70, 229, 0.04); border: 1px dashed var(--primary); border-radius: var(--radius-md); padding: 14px; margin-bottom: 1rem;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <span>🪪</span> SKIT Student ID Verification Required
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 8px;">
+              <label class="form-label" style="font-size: 0.78rem;">SKIT College Roll No. / RTU Roll No.</label>
+              <input type="text" id="regRollNo" class="form-control" placeholder="e.g. 24ESKCS677" style="font-size: 0.85rem;">
+            </div>
+
+            <div class="form-row" style="margin-bottom: 8px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Branch</label>
+                <select id="regBranch" class="form-control" style="font-size: 0.85rem;">
+                  <option value="Computer Science & Engineering">B.Tech CSE</option>
+                  <option value="Information Technology">B.Tech IT</option>
+                  <option value="AI & Data Science">B.Tech AI-DS</option>
+                  <option value="Electronics & Communication">B.Tech ECE</option>
+                  <option value="Mechanical Engineering">B.Tech ME</option>
+                  <option value="Civil Engineering">B.Tech CE</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Semester</label>
+                <select id="regSemester" class="form-control" style="font-size: 0.85rem;">
+                  <option value="5th Semester (Section A)">5th Sem</option>
+                  <option value="3rd Semester (Section A)">3rd Sem</option>
+                  <option value="1st Semester (Section A)">1st Sem</option>
+                  <option value="7th Semester (Section A)">7th Sem</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.78rem;">Upload SKIT College ID Card Proof</label>
+              <input type="file" id="idCardFileInput" accept="image/*" class="form-control" style="font-size: 0.8rem;" onchange="previewIdCard(event)">
+              <div id="idCardPreviewBox" style="margin-top: 6px; display: none; text-align: center;">
+                <img id="idCardPreviewImg" src="" alt="ID Preview" style="max-height: 80px; border-radius: 6px; border: 1px solid var(--gray-300);">
+                <div style="font-size: 0.75rem; color: var(--success); font-weight: 700; margin-top: 2px;">✓ College ID Attached</div>
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -330,9 +381,9 @@
           <div class="form-group" id="roleGroup">
             <label class="form-label" for="roleSelect">Select Role</label>
             <select id="roleSelect" class="form-control">
-              <option value="student">Student (B.Tech / MCA / B.Sc/ M.Tech)</option>
+              <option value="student">Student (SKIT Jaipur)</option>
               <option value="faculty">Faculty / Department Staff</option>
-              <option value="admin">Administrator / Management</option>
+              <option value="admin">Administrator / Exam Cell</option>
             </select>
           </div>
 
@@ -354,58 +405,173 @@
   <script src="js/state.js"></script>
   <script>
     let isLoginMode = true;
+    let uploadedIdProofData = null;
+
+    function handleEmailInput(val) {
+      const statusBox = document.getElementById('domainStatusBox');
+      const statusText = document.getElementById('domainStatusText');
+      const idSection = document.getElementById('idVerificationSection');
+      
+      const isSkit = StateManager.isInstitutionalDomain(val);
+
+      if (isSkit) {
+        statusBox.style.display = 'flex';
+        statusBox.style.background = 'var(--success-light)';
+        statusBox.style.color = 'var(--success-text)';
+        statusBox.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        statusText.innerHTML = '<strong>Verified SKIT Domain (@skit.ac.in)</strong> — Instant Direct Access';
+        if (!isLoginMode) {
+          idSection.style.display = 'none';
+        }
+      } else if (val.includes('@')) {
+        statusBox.style.display = 'flex';
+        statusBox.style.background = 'var(--warning-light)';
+        statusBox.style.color = 'var(--warning-text)';
+        statusBox.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+        statusText.innerHTML = '<strong>Non-Institutional Email</strong> — Admin ID Card Verification Required';
+        if (!isLoginMode) {
+          idSection.style.display = 'block';
+        }
+      } else {
+        statusBox.style.display = 'none';
+        idSection.style.display = 'none';
+      }
+    }
+
+    function previewIdCard(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          uploadedIdProofData = e.target.result;
+          document.getElementById('idCardPreviewImg').src = uploadedIdProofData;
+          document.getElementById('idCardPreviewBox').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
 
     function toggleAuthMode() {
       isLoginMode = !isLoginMode;
       document.getElementById('formTitle').innerText = isLoginMode ? 'Sign In to Campus' : 'Create Campus Account';
-      document.getElementById('formSubTitle').innerText = isLoginMode ? 'Enter your university credentials to continue' : 'Register your student or staff profile';
+      document.getElementById('formSubTitle').innerText = isLoginMode ? 'Enter your university credentials to continue' : 'Register your SKIT student or staff profile';
       document.getElementById('nameGroup').style.display = isLoginMode ? 'none' : 'block';
       document.getElementById('submitBtn').innerText = isLoginMode ? 'Sign In to Dashboard' : 'Complete Registration';
       document.getElementById('toggleText').innerText = isLoginMode ? 'Need an account?' : 'Already registered?';
       document.getElementById('toggleLink').innerText = isLoginMode ? 'Register here' : 'Sign In';
+
+      const emailVal = document.getElementById('emailInput').value;
+      handleEmailInput(emailVal);
     }
 
-    function quickLogin(role) {
-      if (role === 'student') {
+    function quickLogin(roleKey) {
+      if (roleKey === 'skit_student') {
         StateManager.setUser({
           name: 'Ravi Goyal',
-          email: 'ravigoyal@campus.edu',
+          email: '24eskcs677@skit.ac.in',
           role: 'student',
+          collegeName: 'SKIT Jaipur',
           department: 'Computer Science & Engineering',
-          rollNo: '24ESKCS677'
+          rollNo: '24ESKCS677',
+          semester: '5th Sem (Section A)',
+          isVerified: true,
+          verificationStatus: 'Approved'
         });
-        showToast('Logged in as Student (Ravi Goyal)', 'success');
+        showToast('Logged in as Verified SKIT Student (Ravi Goyal)', 'success');
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
-      } else if (role === 'faculty') {
+      } else if (roleKey === 'unverified_student') {
+        StateManager.setUser({
+          name: 'Rohan Sharma',
+          email: 'rohan.sharma.2024@gmail.com',
+          role: 'student',
+          collegeName: 'SKIT Jaipur',
+          department: 'Computer Science & Engineering',
+          rollNo: '24ESKCS112',
+          semester: '5th Sem (Section A)',
+          isVerified: false,
+          verificationStatus: 'Pending'
+        });
+        showToast('Logged in as Pending Verification Student (Rohan)', 'warning');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
+      } else if (roleKey === 'faculty') {
         StateManager.setUser({
           name: 'Dr. Priya Patel',
-          email: 'dr.priya@campus.edu',
+          email: 'dr.priya@skit.ac.in',
           role: 'faculty',
+          collegeName: 'SKIT Jaipur',
           department: 'Electronics & Communication',
-          designation: 'Associate Professor'
+          designation: 'Associate Professor',
+          isVerified: true,
+          verificationStatus: 'Approved'
         });
-        showToast('Logged in as Faculty (Dr. Priya Patel)', 'success');
+        showToast('Logged in as SKIT Faculty (Dr. Priya Patel)', 'success');
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
-      } else if (role === 'admin') {
+      } else if (roleKey === 'admin') {
         StateManager.setUser({
-          name: 'Campus Administrator',
-          email: 'admin@campus.edu',
+          name: 'SKIT Dean & Exam Admin',
+          email: 'admin@skit.ac.in',
           role: 'admin',
-          department: 'Dean Office'
+          collegeName: 'SKIT Jaipur',
+          department: 'Dean Office & Examination Cell',
+          isVerified: true,
+          verificationStatus: 'Approved'
         });
-        showToast('Logged in as Administrator', 'success');
+        showToast('Logged in as SKIT Administrator', 'success');
         setTimeout(() => { window.location.href = 'admin.html'; }, 400);
       }
     }
 
     document.getElementById('authForm').addEventListener('submit', function (e) {
       e.preventDefault();
-      const email = document.getElementById('emailInput').value;
+      const email = document.getElementById('emailInput').value.trim();
       const role = document.getElementById('roleSelect').value;
-      const name = isLoginMode ? (email.split('@')[0].toUpperCase() || 'Campus User') : document.getElementById('nameInput').value;
+      const isInstitutional = StateManager.isInstitutionalDomain(email);
+      const name = isLoginMode ? (email.split('@')[0].toUpperCase() || 'SKIT Student') : (document.getElementById('nameInput').value.trim() || 'SKIT Student');
+      
+      let rollNo = '24ESKCS677';
+      let branch = 'Computer Science & Engineering';
+      let semester = '5th Semester (Section A)';
+      let isVerified = isInstitutional;
+      let verificationStatus = isInstitutional ? 'Approved' : 'Pending';
 
-      StateManager.setUser({ name: name, email: email, role: role });
-      showToast('Welcome ' + name + '! Signing you in...', 'success');
+      if (!isLoginMode && !isInstitutional) {
+        rollNo = document.getElementById('regRollNo').value.trim() || '24ESKCS999';
+        branch = document.getElementById('regBranch').value;
+        semester = document.getElementById('regSemester').value;
+
+        // Register verification request in queue
+        StateManager.addVerificationRequest({
+          name: name,
+          email: email,
+          collegeId: 'skit-jaipur',
+          collegeName: 'SKIT Jaipur',
+          rollNo: rollNo,
+          enrollmentNo: '24E1SKIT' + rollNo.slice(-5),
+          department: branch,
+          semester: semester,
+          method: 'id_card_upload',
+          idProofUrl: uploadedIdProofData || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=60',
+          status: 'Pending'
+        });
+
+        showToast('ID Verification submitted! Sent to SKIT Admin Desk.', 'warning');
+      }
+
+      StateManager.setUser({
+        name: name,
+        email: email,
+        role: role,
+        collegeName: 'SKIT Jaipur',
+        rollNo: rollNo,
+        department: branch,
+        semester: semester,
+        isVerified: isVerified,
+        verificationStatus: verificationStatus
+      });
+
+      if (isInstitutional) {
+        showToast('Welcome ' + name + '! SKIT Domain Verified ✓', 'success');
+      }
 
       setTimeout(function () {
         if (role === 'admin') {
@@ -413,7 +579,12 @@
         } else {
           window.location.href = 'dashboard.html';
         }
-      }, 500);
+      }, 600);
+    });
+
+    // Run domain check on initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      handleEmailInput(document.getElementById('emailInput').value);
     });
   </script>
 </body>

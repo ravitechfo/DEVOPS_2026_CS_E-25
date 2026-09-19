@@ -232,7 +232,72 @@ const INITIAL_DATA = {
     { id: 'tt-602', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'SATURDAY', time: '11:30 AM-1:30 PM', startTime: '11:30', endTime: '13:30', duration: '2.0 hours', subjectCode: 'CRT', subjectName: 'CRT Mock Assessment', room: '5F:L4', faculty: 'Mahender Kumar Beniwal', type: 'Training' }
   ],
 
-  attendance: [] // Empty by default; populated when student pastes ERP attendance
+  attendance: [], // Empty by default; populated when student pastes ERP attendance
+
+  // SKIT & Affiliated Colleges Registry
+  colleges: [
+    {
+      id: 'skit-jaipur',
+      name: 'Swami Keshvanand Institute of Technology, Management & Gramothan (SKIT)',
+      shortName: 'SKIT Jaipur',
+      city: 'Jaipur, Rajasthan',
+      domains: ['skit.ac.in', 'jaipur.skit.ac.in', 'campus.edu'],
+      departments: ['Computer Science & Engineering', 'Information Technology', 'AI & Data Science', 'Electronics & Communication', 'Mechanical Engineering', 'Civil Engineering'],
+      logoText: '🎓 SKIT'
+    }
+  ],
+
+  // Student Institutional Verification Requests Queue (For non-skit email signups or ID verifications)
+  verifications: [
+    {
+      id: 'vr-101',
+      name: 'Rohan Sharma',
+      email: 'rohan.sharma.2024@gmail.com',
+      collegeId: 'skit-jaipur',
+      collegeName: 'SKIT Jaipur',
+      rollNo: '24ESKCS112',
+      enrollmentNo: '24E1SKITCS112',
+      department: 'Computer Science & Engineering',
+      semester: '5th Semester (Section A)',
+      submissionDate: '18 Sep 2026, 10:30 AM',
+      method: 'id_card_upload',
+      idProofUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=60',
+      status: 'Pending', // 'Pending', 'Approved', 'Rejected'
+      reviewerNote: ''
+    },
+    {
+      id: 'vr-102',
+      name: 'Ananya Gupta',
+      email: 'ananya.g@gmail.com',
+      collegeId: 'skit-jaipur',
+      collegeName: 'SKIT Jaipur',
+      rollNo: '24ESKIT045',
+      enrollmentNo: '24E1SKITIT045',
+      department: 'Information Technology',
+      semester: '5th Semester (Section B)',
+      submissionDate: '18 Sep 2026, 09:15 AM',
+      method: 'id_card_upload',
+      idProofUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=60',
+      status: 'Pending',
+      reviewerNote: ''
+    },
+    {
+      id: 'vr-103',
+      name: 'Ravi Goyal',
+      email: '24eskcs677@skit.ac.in',
+      collegeId: 'skit-jaipur',
+      collegeName: 'SKIT Jaipur',
+      rollNo: '24ESKCS677',
+      enrollmentNo: '24E1SKITCS677',
+      department: 'Computer Science & Engineering',
+      semester: '5th Semester (Section A)',
+      submissionDate: '17 Sep 2026, 04:00 PM',
+      method: 'domain_auto_verified',
+      idProofUrl: null,
+      status: 'Approved',
+      reviewerNote: 'Instant verification via institutional email domain (@skit.ac.in)'
+    }
+  ]
 };
 
 

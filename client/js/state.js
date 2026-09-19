@@ -9,6 +9,8 @@ const StateManager = {
     TIMETABLE: 'smart_campus_timetable',
     SUBJECTS: 'smart_campus_subjects',
     ATTENDANCE: 'smart_campus_attendance',
+    COLLEGES: 'smart_campus_colleges',
+    VERIFICATIONS: 'smart_campus_verifications',
     USER: 'smart_campus_user'
   },
 
@@ -34,6 +36,12 @@ const StateManager = {
     if (!localStorage.getItem(this.KEYS.SUBJECTS)) {
       localStorage.setItem(this.KEYS.SUBJECTS, JSON.stringify(INITIAL_DATA.subjects));
     }
+    if (!localStorage.getItem(this.KEYS.COLLEGES)) {
+      localStorage.setItem(this.KEYS.COLLEGES, JSON.stringify(INITIAL_DATA.colleges || []));
+    }
+    if (!localStorage.getItem(this.KEYS.VERIFICATIONS)) {
+      localStorage.setItem(this.KEYS.VERIFICATIONS, JSON.stringify(INITIAL_DATA.verifications || []));
+    }
     if (!localStorage.getItem(this.KEYS.ATTENDANCE)) {
       localStorage.setItem(this.KEYS.ATTENDANCE, JSON.stringify([]));
     } else {
@@ -44,24 +52,91 @@ const StateManager = {
     }
   },
 
+  // Verification & College Domain Checker
+  isInstitutionalDomain(email) {
+    if (!email) return false;
+    const lower = email.toLowerCase().trim();
+    return lower.endsWith('@skit.ac.in') || 
+           lower.endsWith('.skit.ac.in') || 
+           lower.endsWith('@campus.edu');
+  },
+
+  getColleges() {
+    return JSON.parse(localStorage.getItem(this.KEYS.COLLEGES) || JSON.stringify(INITIAL_DATA.colleges || []));
+  },
+
+  getVerifications() {
+    return JSON.parse(localStorage.getItem(this.KEYS.VERIFICATIONS) || '[]');
+  },
+
+  addVerificationRequest(reqData) {
+    const list = this.getVerifications();
+    const newReq = {
+      id: 'vr-' + Date.now(),
+      submissionDate: new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      status: 'Pending',
+      reviewerNote: '',
+      ...reqData
+    };
+    list.unshift(newReq);
+    localStorage.setItem(this.KEYS.VERIFICATIONS, JSON.stringify(list));
+    return newReq;
+  },
+
+  updateVerificationStatus(id, status, reviewerNote = '') {
+    const list = this.getVerifications();
+    const target = list.find(v => v.id === id);
+    if (target) {
+      target.status = status;
+      target.reviewerNote = reviewerNote;
+      target.reviewedAt = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      localStorage.setItem(this.KEYS.VERIFICATIONS, JSON.stringify(list));
+
+      // Also update currently logged in user if it matches this email
+      const currentUser = this.getUser();
+      if (currentUser && currentUser.email && currentUser.email.toLowerCase() === target.email.toLowerCase()) {
+        currentUser.isVerified = (status === 'Approved');
+        currentUser.verificationStatus = status;
+        this.setUser(currentUser);
+      }
+    }
+    return target;
+  },
+
   // User & Authentication Helpers
   getUser() {
     const userStr = localStorage.getItem(this.KEYS.USER);
     if (!userStr) {
       return {
-        name: localStorage.getItem('name') || 'Aarav Sharma (Student)',
-        email: localStorage.getItem('email') || 'student@campus.edu',
-        role: localStorage.getItem('role') || 'student'
+        name: localStorage.getItem('name') || 'Ravi Goyal',
+        email: localStorage.getItem('email') || '24eskcs677@skit.ac.in',
+        role: localStorage.getItem('role') || 'student',
+        collegeName: 'SKIT Jaipur',
+        rollNo: '24ESKCS677',
+        department: 'Computer Science & Engineering',
+        isVerified: true,
+        verificationStatus: 'Approved'
       };
     }
     return JSON.parse(userStr);
   },
 
   setUser(user) {
-    localStorage.setItem(this.KEYS.USER, JSON.stringify(user));
-    localStorage.setItem('name', user.name);
-    localStorage.setItem('role', user.role);
-    localStorage.setItem('email', user.email);
+    // If institutional email, auto-verify!
+    const isDomainVerified = this.isInstitutionalDomain(user.email);
+    const updatedUser = {
+      isVerified: user.isVerified !== undefined ? user.isVerified : isDomainVerified,
+      verificationStatus: user.verificationStatus || (isDomainVerified ? 'Approved' : 'Pending'),
+      collegeName: user.collegeName || 'SKIT Jaipur',
+      rollNo: user.rollNo || (isDomainVerified ? (user.email.split('@')[0].toUpperCase()) : '24ESKCS000'),
+      department: user.department || 'Computer Science & Engineering',
+      ...user
+    };
+
+    localStorage.setItem(this.KEYS.USER, JSON.stringify(updatedUser));
+    localStorage.setItem('name', updatedUser.name);
+    localStorage.setItem('role', updatedUser.role);
+    localStorage.setItem('email', updatedUser.email);
     localStorage.setItem('token', 'mock_jwt_token_' + Date.now());
   },
 

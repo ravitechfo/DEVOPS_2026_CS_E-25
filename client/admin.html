@@ -52,6 +52,10 @@
       <button type="button" class="nav-tab-btn active" onclick="switchAdminTab('notices')">
         📢 <span>Notices</span>
       </button>
+      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('verifications')">
+        🎓 <span>Student Verifications</span>
+        <span id="badgePendingVerifications" class="status-pill status-pending" style="font-size: 0.7rem; padding: 2px 7px; margin-left: 4px; display: none;">0</span>
+      </button>
       <button type="button" class="nav-tab-btn" onclick="switchAdminTab('timetable')">
         📅 <span>Time Table</span>
       </button>
@@ -77,8 +81,8 @@
       <div class="user-badge">
         <div class="user-avatar" style="background: #fce7f3; color: #be185d;">A</div>
         <div>
-          <div id="adminUserName">Campus Admin</div>
-          <span class="role-pill role-admin">ADMINISTRATOR</span>
+          <div id="adminUserName">SKIT Administrator</div>
+          <span class="role-pill role-admin">SKIT ADMIN</span>
         </div>
       </div>
       <button type="button" class="btn btn-danger btn-sm" onclick="StateManager.logout()">Logout</button>
@@ -89,7 +93,14 @@
   <div class="main-wrapper">
 
     <!-- Admin KPI Overview -->
-    <div class="stats-grid" style="margin-top: 1rem;">
+    <div class="stats-grid" style="margin-top: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+      <div class="stat-card" style="cursor: pointer;" onclick="switchAdminTab('verifications')">
+        <div class="stat-info">
+          <h4>Pending Student Verifications</h4>
+          <div class="stat-number" id="adminStatVerifications" style="color: var(--primary);">0</div>
+        </div>
+        <div class="stat-icon-wrap stat-purple">🎓</div>
+      </div>
       <div class="stat-card">
         <div class="stat-info">
           <h4>Published Notices</h4>
@@ -113,7 +124,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-info">
-          <h4>Pending Approvals</h4>
+          <h4>Pending Facility Bookings</h4>
           <div class="stat-number" id="adminStatBookings">0</div>
         </div>
         <div class="stat-icon-wrap stat-emerald">🏢</div>
@@ -145,6 +156,46 @@
           </thead>
           <tbody id="adminNoticesTableBody">
             <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB: STUDENT INSTITUTIONAL VERIFICATION DESK   -->
+    <!-- ============================================== -->
+    <div id="admintab-verifications" class="module-content">
+      <div class="toolbar-row">
+        <div>
+          <h3>🎓 SKIT Student Institutional Verification Desk</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
+            Verify non-institutional (@gmail, @yahoo) student enrollments by validating their official SKIT Roll No. and College ID Card proof.
+          </p>
+        </div>
+        <div class="filter-group">
+          <button type="button" class="filter-btn active" onclick="filterAdminVerifications('All')">All</button>
+          <button type="button" class="filter-btn" onclick="filterAdminVerifications('Pending')">⏳ Pending (<span id="countPendingFilter">0</span>)</button>
+          <button type="button" class="filter-btn" onclick="filterAdminVerifications('Approved')">✓ Approved</button>
+          <button type="button" class="filter-btn" onclick="filterAdminVerifications('Rejected')">✕ Rejected</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student Profile</th>
+              <th>College Roll No.</th>
+              <th>Department / Branch</th>
+              <th>Semester</th>
+              <th>Verification Mode</th>
+              <th>ID Proof Document</th>
+              <th>Status</th>
+              <th>Action / Verification</th>
+            </tr>
+          </thead>
+          <tbody id="adminVerificationsTableBody">
+            <!-- Rendered dynamically via admin.js -->
           </tbody>
         </table>
       </div>
@@ -459,6 +510,27 @@
           <button type="submit" class="btn btn-primary">Save Slot</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Inspect ID Card Proof -->
+  <div class="modal-backdrop" id="modalInspectIdProof">
+    <div class="modal-dialog" style="max-width: 550px;">
+      <div class="modal-header">
+        <h4 class="modal-title" id="inspectIdTitle">🪪 Student College ID Card Proof</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalInspectIdProof')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div id="inspectIdInfoBox" style="background: var(--bg-subtle); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 15px; text-align: left; font-size: 0.88rem;">
+          <!-- Dynamically populated -->
+        </div>
+        <div style="border: 2px dashed var(--border-color); border-radius: var(--radius-md); padding: 10px; background: #00000008; max-height: 380px; overflow: auto;">
+          <img id="inspectIdImage" src="" alt="Student College ID Card" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        </div>
+      </div>
+      <div class="modal-footer" id="inspectIdActionFooter">
+        <!-- Dynamically rendered approve / reject buttons -->
+      </div>
     </div>
   </div>
 

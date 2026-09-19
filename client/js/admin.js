@@ -1,6 +1,7 @@
 // Smart Campus - Admin & Management Console Logic
 
 let currentGrievanceFilter = 'All';
+let currentVerificationFilter = 'All';
 
 document.addEventListener('DOMContentLoaded', () => {
   initAdminProfile();
@@ -9,14 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initAdminProfile() {
   const user = StateManager.getUser();
-  document.getElementById('adminUserName').innerText = user.name || 'Campus Administrator';
+  document.getElementById('adminUserName').innerText = user.name || 'SKIT Administrator';
 }
 
 function switchAdminTab(tabName) {
   const buttons = document.querySelectorAll('.admin-navbar .nav-tab-btn');
   buttons.forEach(btn => btn.classList.remove('active'));
 
-  const targetBtn = Array.from(buttons).find(b => b.onclick.toString().includes(tabName));
+  const targetBtn = Array.from(buttons).find(b => b.onclick && b.onclick.toString().includes(tabName));
   if (targetBtn) targetBtn.classList.add('active');
 
   const contents = document.querySelectorAll('.module-content');
@@ -28,6 +29,7 @@ function switchAdminTab(tabName) {
 
 function renderAdminAll() {
   renderAdminNotices();
+  renderAdminVerifications();
   renderAdminTimetable();
   renderAdminGrievances();
   renderAdminLostFound();
@@ -37,15 +39,157 @@ function renderAdminAll() {
 
 function updateAdminStats() {
   const notices = StateManager.getNotices();
+  const verifications = StateManager.getVerifications();
   const grievances = StateManager.getComplaints();
   const lostFound = StateManager.getLostFound();
   const bookings = StateManager.getBookings();
+
+  const pendingVerifications = verifications.filter(v => v.status === 'Pending').length;
+
+  const statVerifEl = document.getElementById('adminStatVerifications');
+  if (statVerifEl) statVerifEl.innerText = pendingVerifications;
+
+  const badgeVerifEl = document.getElementById('badgePendingVerifications');
+  if (badgeVerifEl) {
+    badgeVerifEl.innerText = pendingVerifications;
+    badgeVerifEl.style.display = pendingVerifications > 0 ? 'inline-block' : 'none';
+  }
+
+  const filterCountEl = document.getElementById('countPendingFilter');
+  if (filterCountEl) filterCountEl.innerText = pendingVerifications;
 
   document.getElementById('adminStatNotices').innerText = notices.length;
   document.getElementById('adminStatGrievances').innerText = grievances.filter(g => g.status !== 'Resolved').length;
   document.getElementById('adminStatLostFound').innerText = lostFound.filter(l => l.status === 'Open').length;
   document.getElementById('adminStatBookings').innerText = bookings.filter(b => b.status === 'Pending').length;
 }
+
+// ==========================================
+// 🎓 STUDENT VERIFICATION DESK
+// ==========================================
+function filterAdminVerifications(status) {
+  currentVerificationFilter = status;
+  const filterBtns = document.querySelectorAll('#admintab-verifications .filter-btn');
+  filterBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.innerText.includes(status) || (status === 'All' && btn.innerText.startsWith('All')));
+  });
+  renderAdminVerifications();
+}
+
+function renderAdminVerifications() {
+  let list = StateManager.getVerifications();
+  const tbody = document.getElementById('adminVerificationsTableBody');
+  if (!tbody) return;
+
+  if (currentVerificationFilter !== 'All') {
+    list = list.filter(v => v.status === currentVerificationFilter);
+  }
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: var(--gray-500);">No student verification requests matching '${currentVerificationFilter}'.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(v => {
+    const isPending = v.status === 'Pending';
+    const isApproved = v.status === 'Approved';
+    const isAutoVerified = v.method === 'domain_auto_verified';
+
+    const statusBadge = isApproved 
+      ? `<span class="status-pill status-approved">✓ Verified & Approved</span>`
+      : v.status === 'Rejected'
+      ? `<span class="status-pill status-rejected">✕ Rejected</span>`
+      : `<span class="status-pill status-pending">⏳ Pending Review</span>`;
+
+    const methodBadge = isAutoVerified
+      ? `<span class="card-tag tag-exams" style="font-size: 0.75rem;">⚡ @skit.ac.in Domain</span>`
+      : `<span class="card-tag tag-academic" style="font-size: 0.75rem;">🪪 ID Card Upload</span>`;
+
+    const idProofBtn = v.idProofUrl 
+      ? `<button type="button" class="btn btn-secondary btn-sm" onclick="inspectIdProof('${v.id}')" style="display: inline-flex; align-items: center; gap: 4px;">
+           <span style="font-size: 0.9rem;">👁️</span> View ID Proof
+         </button>`
+      : `<span style="color: var(--text-muted); font-size: 0.8rem;">Auto-Verified Domain</span>`;
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight: 700; color: var(--text-primary); font-size: 0.92rem;">${v.name}</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">${v.email}</div>
+          <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">🕒 ${v.submissionDate || 'Recently'}</div>
+        </td>
+        <td>
+          <span style="font-family: monospace; font-weight: 700; font-size: 0.9rem; color: var(--primary);">${v.rollNo || 'N/A'}</span>
+          ${v.enrollmentNo ? `<div style="font-size: 0.72rem; color: var(--text-muted);">${v.enrollmentNo}</div>` : ''}
+        </td>
+        <td><strong>${v.department || 'B.Tech CSE'}</strong></td>
+        <td><span class="role-pill role-student" style="font-size: 0.75rem;">${v.semester || '5th Sem'}</span></td>
+        <td>${methodBadge}</td>
+        <td>${idProofBtn}</td>
+        <td>${statusBadge}</td>
+        <td>
+          ${isPending ? `
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-success btn-sm" onclick="handleVerifyStudent('${v.id}', 'Approved')">✓ Approve</button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="handleVerifyStudent('${v.id}', 'Rejected')">✕ Reject</button>
+            </div>
+          ` : `
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+              ${v.reviewedAt ? `Reviewed ${v.reviewedAt}` : 'Decision Finalized'}
+            </div>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function inspectIdProof(id) {
+  const req = StateManager.getVerifications().find(v => v.id === id);
+  if (!req) return;
+
+  document.getElementById('inspectIdTitle').innerText = `🪪 ID Proof: ${req.name} (${req.rollNo || req.email})`;
+  document.getElementById('inspectIdInfoBox').innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <div><strong>Student:</strong> ${req.name}</div>
+      <div><strong>Email:</strong> ${req.email}</div>
+      <div><strong>Roll No:</strong> <span style="font-family:monospace; color:var(--primary); font-weight:700;">${req.rollNo}</span></div>
+      <div><strong>Branch:</strong> ${req.department}</div>
+      <div><strong>Semester:</strong> ${req.semester}</div>
+      <div><strong>Submitted:</strong> ${req.submissionDate}</div>
+    </div>
+  `;
+
+  document.getElementById('inspectIdImage').src = req.idProofUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=60';
+
+  const footer = document.getElementById('inspectIdActionFooter');
+  if (req.status === 'Pending') {
+    footer.innerHTML = `
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modalInspectIdProof')">Close</button>
+      <button type="button" class="btn btn-danger" onclick="closeModal('modalInspectIdProof'); handleVerifyStudent('${req.id}', 'Rejected');">✕ Reject ID Proof</button>
+      <button type="button" class="btn btn-success" onclick="closeModal('modalInspectIdProof'); handleVerifyStudent('${req.id}', 'Approved');">✓ Verify & Approve Student</button>
+    `;
+  } else {
+    footer.innerHTML = `
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modalInspectIdProof')">Close</button>
+      <span style="font-size:0.85rem; font-weight:700; color:${req.status === 'Approved' ? 'var(--success)' : 'var(--danger)'};">
+        Status: ${req.status}
+      </span>
+    `;
+  }
+
+  openModal('modalInspectIdProof');
+}
+
+function handleVerifyStudent(id, decision) {
+  const note = decision === 'Approved' ? 'Verified by SKIT Exam & Admin Office' : 'ID proof could not be validated with SKIT student records.';
+  StateManager.updateVerificationStatus(id, decision, note);
+
+  showToast(`Student record ${decision.toLowerCase()} successfully!`, decision === 'Approved' ? 'success' : 'warning');
+  renderAdminVerifications();
+  updateAdminStats();
+}
+
 
 // ==========================================
 // 1. ADMIN NOTICES

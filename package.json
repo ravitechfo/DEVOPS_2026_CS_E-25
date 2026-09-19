@@ -1,0 +1,13 @@
+{
+  "name": "smart-campus",
+  "version": "1.0.0",
+  "description": "Smart Campus Portal & DevOps Management System",
+  "scripts": {
+    "start": "node server/server.js",
+    "report:weekly": "python3 generate_report.py weekly",
+    "report:monthly": "python3 generate_report.py monthly",
+    "report:final": "python3 generate_report.py final"
+  },
+  "author": "SKIT CS&E",
+  "license": "ISC"
+}

@@ -83,13 +83,13 @@ def get_git_metrics(interval="weekly"):
         # ---------------------------------------------------------
         # FINAL REPORT: JULY + AUGUST 2026
         # ---------------------------------------------------------
-        since_date = "2026-07-01"
-        until_date = "2026-09-01"
+        since_date = "2026-09-01"
+        until_date = "2026-09-15"
 
         git_args.append(f"--since={since_date}")
         git_args.append(f"--until={until_date}")
 
-        scope_title = "July 01, 2026 to August 31, 2026"
+        scope_title = "september 01, 2026 to september 15, 2026"
 
     try:
         raw_output = subprocess.check_output(
@@ -140,8 +140,12 @@ def get_git_metrics(interval="weekly"):
             else:
                 continue
 
-            # Exclude bot commits from metric calculations
-            if "bot" in author.lower() or "github-actions" in author.lower():
+            # Exclude bot commits and old Ravi Goyal identity from report
+            if (
+                "bot" in author.lower()
+                or "github-actions" in author.lower()
+                or author.strip().lower() == "ravi goyal"
+            ):
                 current_author = None
                 continue
 

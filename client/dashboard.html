@@ -24,7 +24,7 @@
       <button type="button" class="nav-tab-btn active" onclick="switchModule('notices')">
         📢 <span>Notice Board</span>
       </button>
-      <button type="button" class="nav-tab-btn" onclick="switchModule('attendance')">
+      <button type="button" class="nav-tab-btn" id="navTabAttendance" onclick="switchModule('attendance')">
         📊 <span>Attendance &amp; Bunks</span>
       </button>
       <button type="button" class="nav-tab-btn" onclick="switchModule('timetable')">
@@ -46,11 +46,14 @@
       <button type="button" class="theme-toggle-btn" onclick="ThemeManager.toggle()" aria-label="Toggle Theme">
         <span class="theme-icon">🌙</span> <span class="theme-label">Dark</span>
       </button>
-      <div class="user-badge">
-        <div class="user-avatar" id="userAvatar">A</div>
+      <div class="user-badge" style="gap: 10px;">
+        <div class="user-avatar" id="userAvatar">R</div>
         <div>
-          <div id="navUserName" style="line-height: 1.2;">Aarav Sharma</div>
-          <span class="role-pill role-student" id="navUserRole">STUDENT</span>
+          <div id="navUserName" style="line-height: 1.2; font-weight: 700;">Ravi Goyal</div>
+          <div style="display: flex; align-items: center; gap: 5px; margin-top: 2px;">
+            <span class="role-pill role-student" id="navUserRole">STUDENT</span>
+            <span id="navVerificationBadge" class="status-pill status-approved" style="font-size: 0.68rem; padding: 2px 6px;">🛡️ SKIT VERIFIED</span>
+          </div>
         </div>
       </div>
       <button type="button" class="btn btn-secondary btn-sm" onclick="StateManager.logout()">Logout</button>
@@ -60,17 +63,40 @@
   <!-- Main Container -->
   <div class="main-wrapper">
 
+    <!-- Institutional Status Alert Banner (Shown dynamically) -->
+    <div id="studentVerificationAlert" style="display: none; margin-top: 1rem; border-radius: var(--radius-md); padding: 1rem 1.4rem; align-items: center; justify-content: space-between; gap: 15px; border: 1px solid;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div id="verifAlertIcon" style="font-size: 1.6rem;">⏳</div>
+        <div>
+          <h4 id="verifAlertHeading" style="font-size: 0.95rem; margin-bottom: 2px;">SKIT Student Verification Pending</h4>
+          <p id="verifAlertMsg" style="font-size: 0.82rem; margin: 0;"></p>
+        </div>
+      </div>
+      <div id="verifAlertActions">
+        <!-- Dynamic Action buttons -->
+      </div>
+    </div>
+
     <!-- Hero Banner -->
-    <div class="hero-banner">
-      <h1 class="hero-title" id="welcomeTitle">Welcome to Smart Campus</h1>
-      <p class="hero-subtitle">
-        Track your 75% attendance criteria &amp; safe bunks, stay updated with university circulars, report lost belongings, and reserve university labs seamlessly.
-      </p>
+    <div class="hero-banner" style="margin-top: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h1 class="hero-title" id="welcomeTitle">Welcome to SKIT Smart Campus</h1>
+          <p class="hero-subtitle" id="heroSubtitle">
+            Track your 75% attendance criteria &amp; safe bunks, stay updated with university circulars, report lost belongings, and reserve university labs seamlessly.
+          </p>
+        </div>
+        <div id="heroCollegeBadge" style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: var(--radius-md); padding: 8px 16px; color: white; text-align: right;">
+          <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.85;">Affiliated Institution</div>
+          <div style="font-weight: 800; font-size: 1rem;" id="heroCollegeName">🎓 SKIT Jaipur</div>
+          <div style="font-size: 0.75rem; opacity: 0.9;" id="heroStudentRoll">Roll: 24ESKCS677</div>
+        </div>
+      </div>
     </div>
 
     <!-- KPI Stat Counters -->
     <div class="stats-grid">
-      <div class="stat-card" style="cursor: pointer;" onclick="switchModule('attendance')">
+      <div class="stat-card" id="statCardAttendance" style="cursor: pointer;" onclick="switchModule('attendance')">
         <div class="stat-info">
           <h4>My Attendance</h4>
           <div class="stat-number" id="statAttendancePercent">--%</div>
