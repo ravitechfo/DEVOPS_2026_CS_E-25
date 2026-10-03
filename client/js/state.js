@@ -42,13 +42,8 @@ const StateManager = {
     if (!localStorage.getItem(this.KEYS.VERIFICATIONS)) {
       localStorage.setItem(this.KEYS.VERIFICATIONS, JSON.stringify(INITIAL_DATA.verifications || []));
     }
-    if (!localStorage.getItem(this.KEYS.ATTENDANCE)) {
-      localStorage.setItem(this.KEYS.ATTENDANCE, JSON.stringify([]));
-    } else {
-      const stored = JSON.parse(localStorage.getItem(this.KEYS.ATTENDANCE) || '[]');
-      if (stored.length > 0 && stored[0].id === 'att-101') {
-        localStorage.setItem(this.KEYS.ATTENDANCE, JSON.stringify([]));
-      }
+    if (!localStorage.getItem(this.KEYS.ATTENDANCE) || JSON.parse(localStorage.getItem(this.KEYS.ATTENDANCE) || '[]').length === 0) {
+      localStorage.setItem(this.KEYS.ATTENDANCE, JSON.stringify(INITIAL_DATA.attendance || []));
     }
   },
 
@@ -415,6 +410,35 @@ const StateManager = {
     this.setAttendance([]);
   },
 
+  // Mark Live Actual Attendance (Permanent Update)
+  markAttendance(id, type) {
+    const list = this.getAttendance();
+    const target = list.find(s => s.id === id);
+    if (!target) return null;
+
+    if (type === 'present_plus') {
+      target.attended = (target.attended || 0) + 1;
+      target.total = (target.total || 0) + 1;
+    } else if (type === 'present_minus') {
+      if ((target.attended || 0) > 0 && (target.total || 0) > 0) {
+        target.attended = target.attended - 1;
+        target.total = target.total - 1;
+      }
+    } else if (type === 'absent_plus') {
+      target.total = (target.total || 0) + 1;
+    } else if (type === 'absent_minus') {
+      if ((target.total || 0) > (target.attended || 0)) {
+        target.total = target.total - 1;
+      }
+    }
+
+    target.originalAttended = target.attended;
+    target.originalTotal = target.total;
+
+    this.setAttendance(list);
+    return target;
+  },
+
   // Attendance Settlement / What-If Simulation
   simulateSubject(id, actionType) {
     const list = this.getAttendance();
@@ -474,13 +498,15 @@ const StateManager = {
     return list;
   },
 
-  // Core Math Calculation Logic for Single Subject
+  // Core Math Calculation Logic for Single Subject (Attendify Precision Engine)
   calculateSubjectStats(sub) {
-    const attended = sub.attended || 0;
-    const total = sub.total || 0;
-    const target = sub.target || 75;
+    const attended = Math.max(0, parseInt(sub.attended) || 0);
+    const total = Math.max(attended, parseInt(sub.total) || 0);
+    const absent = Math.max(0, total - attended);
+    const target = parseInt(sub.target) || 75;
     const origAttended = sub.originalAttended !== undefined ? sub.originalAttended : attended;
     const origTotal = sub.originalTotal !== undefined ? sub.originalTotal : total;
+    const origAbsent = Math.max(0, origTotal - origAttended);
 
     const percentage = total === 0 ? 100 : ((attended / total) * 100);
     const roundedPercent = Math.round(percentage * 10) / 10;
@@ -501,16 +527,25 @@ const StateManager = {
       safeBunks = 0;
       classesToAttend = 0;
     } else if (isSafe) {
-      // Safe to Bunk: floor((attended - target*total) / target)
+      // Safe to Bunk Formula: floor((attended - target*total) / target)
       safeBunks = Math.floor((attended - (targetDecimal * total)) / targetDecimal);
       if (safeBunks < 0) safeBunks = 0;
     } else {
-      // Need to Attend: ceil((target*total - attended) / (1 - target))
+      // Need to Attend Formula: ceil((target*total - attended) / (1 - target))
       const num = (targetDecimal * total) - attended;
       const den = 1 - targetDecimal;
       classesToAttend = Math.ceil(num / den);
       if (classesToAttend < 0) classesToAttend = 0;
     }
+
+    // Next Class Projections
+    const nextAttended = attended + 1;
+    const nextTotal = total + 1;
+    const nextPresentPercent = Math.round(((nextAttended / nextTotal) * 100) * 10) / 10;
+    const nextPresentDelta = Math.round((nextPresentPercent - roundedPercent) * 10) / 10;
+
+    const nextAbsentPercent = Math.round(((attended / nextTotal) * 100) * 10) / 10;
+    const nextAbsentDelta = Math.round((nextAbsentPercent - roundedPercent) * 10) / 10;
 
     let statusClass = 'safe';
     let statusLabel = 'On Track';
@@ -533,11 +568,21 @@ const StateManager = {
       isSimulated,
       simulatedAttended: attended,
       simulatedTotal: total,
+      simulatedAbsent: absent,
       origAttended,
       origTotal,
+      origAbsent,
+      attended,
+      total,
+      absent,
+      target,
       isSafe,
       safeBunks,
       classesToAttend,
+      nextPresentPercent,
+      nextPresentDelta,
+      nextAbsentPercent,
+      nextAbsentDelta,
       statusClass,
       statusLabel
     };

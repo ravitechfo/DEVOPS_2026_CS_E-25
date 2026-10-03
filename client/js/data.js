@@ -232,7 +232,19 @@ const INITIAL_DATA = {
     { id: 'tt-602', studentEmail: 'student@campus.edu', section: '5th Sem - CSE (Sec A)', day: 'SATURDAY', time: '11:30 AM-1:30 PM', startTime: '11:30', endTime: '13:30', duration: '2.0 hours', subjectCode: 'CRT', subjectName: 'CRT Mock Assessment', room: '5F:L4', faculty: 'Mahender Kumar Beniwal', type: 'Training' }
   ],
 
-  attendance: [], // Empty by default; populated when student pastes ERP attendance
+  attendance: [
+    { id: 'att-1', subjectCode: 'CEUL560.1', subjectName: 'Climate Change Science', originalAttended: 12, originalTotal: 27, attended: 12, total: 27, target: 75, faculty: 'Jangid Jitender' },
+    { id: 'att-2', subjectCode: 'CRT', subjectName: 'Campus Recruitment Training', originalAttended: 60, originalTotal: 66, attended: 60, total: 66, target: 75, faculty: 'Mahender Kumar Beniwal' },
+    { id: 'att-3', subjectCode: 'CSUL501', subjectName: 'Design and Analysis of Algorithms', originalAttended: 20, originalTotal: 31, attended: 20, total: 31, target: 75, faculty: 'Prof. Neetu Agrawal' },
+    { id: 'att-4', subjectCode: 'CSUL502', subjectName: 'Machine Learning', originalAttended: 18, originalTotal: 30, attended: 18, total: 30, target: 75, faculty: 'Prof. Loveleen Kumar' },
+    { id: 'att-5', subjectCode: 'CSUL503', subjectName: 'Cryptography and Network Security', originalAttended: 26, originalTotal: 30, attended: 26, total: 30, target: 75, faculty: 'Prof. Himani Thakur' },
+    { id: 'att-6', subjectCode: 'CSUL504', subjectName: 'Full Stack Development', originalAttended: 14, originalTotal: 19, attended: 14, total: 19, target: 75, faculty: 'Prof. Sumit Kumar' },
+    { id: 'att-7', subjectCode: 'CSUL511', subjectName: 'DevOps Practices and Principles', originalAttended: 27, originalTotal: 33, attended: 27, total: 33, target: 75, faculty: 'Prof. Sumit Kumar' },
+    { id: 'att-8', subjectCode: 'CSUP520', subjectName: 'Design and Analysis of Algorithms Lab', originalAttended: 20, originalTotal: 22, attended: 20, total: 22, target: 75, faculty: 'Prof. Neetu Agrawal' },
+    { id: 'att-9', subjectCode: 'CSUP521', subjectName: 'Machine Learning Lab', originalAttended: 22, originalTotal: 22, attended: 22, total: 22, target: 75, faculty: 'Prof. Loveleen Kumar' },
+    { id: 'att-10', subjectCode: 'CSUP522', subjectName: 'Full Stack Development Lab', originalAttended: 14, originalTotal: 20, attended: 14, total: 20, target: 75, faculty: 'Prof. Himani Thakur' },
+    { id: 'att-11', subjectCode: 'CSUT530', subjectName: 'Industrial Training', originalAttended: 13, originalTotal: 14, attended: 13, total: 14, target: 75, faculty: 'Dr. R. K. Sharma' }
+  ],
 
   // SKIT & Affiliated Colleges Registry
   colleges: [

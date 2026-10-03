@@ -811,8 +811,11 @@ function handleCreateBooking(e) {
 }
 
 // ==========================================
-// SMART ATTENDANCE SETTLEMENT & BUNK MANAGER
 // ==========================================
+// SMART ATTENDANCE & BUNK MANAGER (ATTENDIFY ENGINE)
+// ==========================================
+let currentAttendanceEntryMode = 'present_total';
+
 function filterAttendance(type) {
   currentAttendanceFilter = type;
   const filterBtns = document.querySelectorAll('#attFilterGroup .filter-btn');
@@ -844,7 +847,7 @@ function renderAttendance() {
         <div class="att-empty-icon">📊</div>
         <h3>Set Up Your Attendance Tracker</h3>
         <p>
-          Koi fake ya hardcoded data load nahi kiya gaya hai. Apne College ERP (CollPoll / iCloudEMS / TCS iON / Webkiosk) se attendance table copy karke direct paste karein ya manually enter karein.
+          Koi fake ya hardcoded data load nahi kiya gaya hai. Apne College ERP (CollPoll / SKIT ERP / iCloudEMS / TCS iON / Webkiosk) se attendance table copy karke direct paste karein ya manually enter karein.
         </p>
         
         <div class="att-empty-actions">
@@ -854,14 +857,14 @@ function renderAttendance() {
           <button type="button" class="btn btn-secondary" onclick="openAddAttendanceModal()">
             + Add Subject Manually
           </button>
-          <button type="button" class="btn btn-subtle" onclick="loadSampleErpDemoData()" title="Quick load sample subjects to test">
-            🧪 Load Sample Demo Data
+          <button type="button" class="btn btn-subtle" onclick="loadSampleErpDemoData()" title="Quick load realistic subjects to test">
+            🧪 Load Sample ERP Demo Data
           </button>
         </div>
 
         <div class="att-preview-hint">
           <strong>Tip / Supported Formats:</strong><br>
-          Direct table copy from ERP portal, Excel copy, or CSV line format: <code>CSUL501, Design and Analysis of Algorithms, 22, 25</code>
+          Direct table copy from ERP, Excel copy, or line formats like: <code>CSUL501, Design and Analysis of Algorithms, 32, 39, 82.05%</code>
         </div>
       </div>
     `;
@@ -890,7 +893,7 @@ function renderAttendance() {
       const sign = overall.deltaOverallPercent >= 0 ? '+' : '';
       circleBar.className = overall.overallPercentage < 75 ? 'att-circle-bar danger' : 'att-circle-bar safe';
       heroStatusPill.className = 'att-status-pill simulated';
-      heroStatusPill.innerHTML = `<span>⚡ Settlement Simulator Active (Original: ${overall.origOverallPercentage}%)</span>`;
+      heroStatusPill.innerHTML = `<span>⚡ Simulator Active (Original: ${overall.origOverallPercentage}%)</span>`;
       heroTitle.innerText = `Projected Attendance: ${overall.overallPercentage}% (${sign}${overall.deltaOverallPercent}%)`;
       heroDesc.innerHTML = `You are testing "What-If" scenarios on your subjects. <strong><a href="javascript:void(0)" onclick="handleResetAllSimulations()" style="color: var(--primary); text-decoration: underline;">Click here to Reset All to Original ERP baseline</a></strong>.`;
     } else if (overall.overallPercentage < 75) {
@@ -944,7 +947,7 @@ function renderAttendance() {
     return;
   }
 
-  // 3. Render Subject Cards with Settlement Simulation & Reset
+  // 3. Render Subject Cards with Attendify Steppers & Next-Class Projections
   container.innerHTML = filtered.map(sub => {
     const stats = StateManager.calculateSubjectStats(sub);
 
@@ -956,25 +959,17 @@ function renderAttendance() {
       if (stats.safeBunks > 0) {
         advisorHtml = `<div class="att-advisor-box safe">🎉 Safe to bunk <strong>${stats.safeBunks} ${stats.safeBunks === 1 ? 'class' : 'classes'}</strong> and stay &ge; 75%.</div>`;
       } else {
-        advisorHtml = `<div class="att-advisor-box warning">⚖️ On edge (75%)! Do not miss the next class.</div>`;
+        advisorHtml = `<div class="att-advisor-box warning">⚖️ Borderline (75.0%)! Missing next class causes shortage.</div>`;
       }
     } else {
-      advisorHtml = `<div class="att-advisor-box danger">⚠️ Danger! Attend next <strong>${stats.classesToAttend} ${stats.classesToAttend === 1 ? 'class' : 'classes'} straight</strong> to reach 75%.</div>`;
+      advisorHtml = `<div class="att-advisor-box danger">⚠️ Shortage! Attend next <strong>${stats.classesToAttend} ${stats.classesToAttend === 1 ? 'class' : 'classes'} straight</strong> to reach 75%.</div>`;
     }
 
     const percentageColor = stats.statusClass === 'danger' ? 'var(--danger)' : stats.statusClass === 'warning' ? 'var(--warning)' : 'var(--success)';
 
-    // Simulation info badge
-    let simulationInfo = '';
-    if (stats.isSimulated) {
-      const sign = stats.deltaPercent >= 0 ? '+' : '';
-      simulationInfo = `
-        <div class="att-sim-badge">
-          <span>⚡ Simulated: <strong>${stats.simulatedAttended}/${stats.simulatedTotal}</strong> (${stats.percentage}%)</span>
-          <span class="att-sim-diff ${stats.deltaPercent >= 0 ? 'pos' : 'neg'}">${sign}${stats.deltaPercent}%</span>
-        </div>
-      `;
-    }
+    // Next Class Impact Projections
+    const nextPresentSign = stats.nextPresentDelta >= 0 ? '+' : '';
+    const nextAbsentSign = stats.nextAbsentDelta >= 0 ? '+' : '';
 
     return `
       <div class="att-card ${stats.isSimulated ? 'is-simulated' : ''}" id="att-card-${sub.id}">
@@ -983,7 +978,7 @@ function renderAttendance() {
             <div>
               <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 4px;">
                 <span class="att-card-code">${sub.subjectCode}</span>
-                ${stats.isSimulated ? '<span class="att-sim-pill">Simulating</span>' : ''}
+                ${stats.isSimulated ? '<span class="att-sim-pill">Testing</span>' : ''}
               </div>
               <h4 class="att-card-title">${sub.subjectName}</h4>
               <div class="att-card-faculty">👨‍🏫 ${sub.faculty || 'Faculty Incharge'}</div>
@@ -995,8 +990,7 @@ function renderAttendance() {
             <div class="att-metrics-row">
               <div class="att-percentage" style="color: ${percentageColor};">${stats.percentage}%</div>
               <div class="att-counts">
-                ${stats.isSimulated ? `<span style="text-decoration: line-through; opacity: 0.6; font-size: 0.78rem;">${stats.origAttended}/${stats.origTotal}</span> ` : ''}
-                ${stats.simulatedAttended} / ${stats.simulatedTotal} Classes
+                ${stats.attended} Present &bull; ${stats.absent} Absent &bull; ${stats.total} Total
               </div>
             </div>
 
@@ -1005,35 +999,55 @@ function renderAttendance() {
               <div class="att-bar-target-line" title="Mandatory 75% Cutoff"></div>
             </div>
 
-            ${simulationInfo}
+            <!-- Next Class Impact Projection -->
+            <div class="att-card-aux-row" style="margin-top: 8px;">
+              <div class="att-next-projection" title="Projected percentage if you attend or miss next class">
+                <span>Next Class:</span>
+                <span class="att-next-proj-tag pos">✓ Attended ➔ ${stats.nextPresentPercent}% (${nextPresentSign}${stats.nextPresentDelta}%)</span>
+                <span>|</span>
+                <span class="att-next-proj-tag neg">✗ Bunked ➔ ${stats.nextAbsentPercent}% (${nextAbsentSign}${stats.nextAbsentDelta}%)</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div>
           ${advisorHtml}
 
-          <!-- Settlement Simulation Controls -->
-          <div class="att-actions-row">
-            <button type="button" class="btn-att-present" onclick="handleSimulate('${sub.id}', 'attend_more')" title="Simulate attending next class (+1 Attended, +1 Total)">
-              <span>+ Attend</span>
-            </button>
-            <button type="button" class="btn-att-absent" onclick="handleSimulate('${sub.id}', 'bunk_more')" title="Simulate missing / bunking next class (+1 Total only)">
-              <span>+ Bunk</span>
-            </button>
-            
-            ${stats.isSimulated ? `
-              <button type="button" class="btn-icon-subtle reset active" onclick="handleResetSubject('${sub.id}')" title="Reset this subject back to original ERP data">
-                ↺
-              </button>
-            ` : `
+          <!-- Attendify Interactive Class Steppers -->
+          <div class="att-actions-container">
+            <div class="att-steppers-grid">
+              <!-- Present Stepper -->
+              <div class="att-stepper-group" title="Record Present Classes">
+                <button type="button" class="att-stepper-btn minus" onclick="handleQuickPresent('${sub.id}', -1)" title="Undo 1 Present (-1 Present, -1 Total)">−</button>
+                <button type="button" class="att-stepper-btn plus-present" onclick="handleQuickPresent('${sub.id}', 1)" title="Mark Present (+1 Present, +1 Total)">
+                  <span>+ Present (${stats.attended})</span>
+                </button>
+              </div>
+
+              <!-- Absent / Bunk Stepper -->
+              <div class="att-stepper-group" title="Record Absent / Bunked Classes">
+                <button type="button" class="att-stepper-btn minus" onclick="handleQuickAbsent('${sub.id}', -1)" title="Undo 1 Bunk (-1 Total)">−</button>
+                <button type="button" class="att-stepper-btn plus-absent" onclick="handleQuickAbsent('${sub.id}', 1)" title="Mark Absent / Bunk (+1 Total)">
+                  <span>+ Bunk (${stats.absent})</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Aux Controls (Edit, Reset, Delete) -->
+            <div style="display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 4px;">
+              ${stats.isSimulated ? `
+                <button type="button" class="btn-icon-subtle reset active" onclick="handleResetSubject('${sub.id}')" title="Reset subject back to original ERP baseline">
+                  ↺ Reset
+                </button>
+              ` : ''}
               <button type="button" class="btn-icon-subtle" onclick="openAddAttendanceModal('${sub.id}')" title="Edit course details">
                 ✏️
               </button>
-            `}
-
-            <button type="button" class="btn-icon-subtle delete" onclick="deleteAttendanceCourse('${sub.id}')" title="Delete subject">
-              🗑️
-            </button>
+              <button type="button" class="btn-icon-subtle delete" onclick="deleteAttendanceCourse('${sub.id}')" title="Delete subject">
+                🗑️
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1041,16 +1055,32 @@ function renderAttendance() {
   }).join('');
 }
 
-// Simulation Actions (+Attend / +Bunk)
-function handleSimulate(id, actionType) {
-  const updated = StateManager.simulateSubject(id, actionType);
+// Quick Present Stepper (+1 or -1)
+function handleQuickPresent(id, delta) {
+  const type = delta > 0 ? 'present_plus' : 'present_minus';
+  const updated = StateManager.markAttendance(id, type);
   if (updated) {
     const stats = StateManager.calculateSubjectStats(updated);
-    const sign = stats.deltaPercent >= 0 ? '+' : '';
-    if (actionType === 'attend_more') {
-      showToast(`Simulated +1 Attended for ${updated.subjectCode} (${stats.percentage}%, ${sign}${stats.deltaPercent}%)`, 'success');
+    if (delta > 0) {
+      showToast(`Marked Present for ${updated.subjectCode}: ${stats.attended}/${stats.total} (${stats.percentage}%)`, 'success');
     } else {
-      showToast(`Simulated +1 Bunk for ${updated.subjectCode} (${stats.percentage}%, ${sign}${stats.deltaPercent}%)`, 'error');
+      showToast(`Undid Present for ${updated.subjectCode}: ${stats.attended}/${stats.total} (${stats.percentage}%)`, 'info');
+    }
+    renderAttendance();
+    updateStats();
+  }
+}
+
+// Quick Absent / Bunk Stepper (+1 or -1)
+function handleQuickAbsent(id, delta) {
+  const type = delta > 0 ? 'absent_plus' : 'absent_minus';
+  const updated = StateManager.markAttendance(id, type);
+  if (updated) {
+    const stats = StateManager.calculateSubjectStats(updated);
+    if (delta > 0) {
+      showToast(`Recorded Bunk for ${updated.subjectCode}: ${stats.attended}/${stats.total} (${stats.percentage}%)`, 'error');
+    } else {
+      showToast(`Undid Bunk for ${updated.subjectCode}: ${stats.attended}/${stats.total} (${stats.percentage}%)`, 'info');
     }
     renderAttendance();
     updateStats();
@@ -1088,17 +1118,111 @@ function handleClearAllAttendance() {
 // Load sample realistic ERP demo dataset for 1-click test
 function loadSampleErpDemoData() {
   const sampleData = [
-    { subjectCode: 'CSUL501', subjectName: 'Design and Analysis of Algorithms (DAA)', attended: 22, total: 25, target: 75, faculty: 'Prof. Neetu Agrawal' },
-    { subjectCode: 'CSUL502', subjectName: 'Machine Learning (ML)', attended: 17, total: 24, target: 75, faculty: 'Prof. Loveleen Kumar' },
-    { subjectCode: 'CSUL503', subjectName: 'Cryptography & Network Security (CNS)', attended: 14, total: 20, target: 75, faculty: 'Prof. Himani Thakur' },
-    { subjectCode: 'CSUL511', subjectName: 'Design Patterns & Principles (DPP)', attended: 23, total: 25, target: 75, faculty: 'Prof. Sumit Kumar' },
-    { subjectCode: 'CSUP521', subjectName: 'Machine Learning Lab', attended: 10, total: 10, target: 75, faculty: 'Prof. Loveleen Kumar' },
-    { subjectCode: 'CRT', subjectName: 'Campus Recruitment Training (CRT)', attended: 18, total: 20, target: 75, faculty: 'Prof. Mahender Beniwal' }
+    { subjectCode: 'CSUL501', subjectName: 'Design and Analysis of Algorithms (DAA)', attended: 32, total: 39, target: 75, faculty: 'Prof. Neetu Agrawal' },
+    { subjectCode: 'CSUL502', subjectName: 'Machine Learning (ML)', attended: 21, total: 25, target: 75, faculty: 'Prof. Loveleen Kumar' },
+    { subjectCode: 'CSUL503', subjectName: 'Cryptography & Network Security (CNS)', attended: 18, total: 22, target: 75, faculty: 'Prof. Himani Thakur' },
+    { subjectCode: 'CSUL511', subjectName: 'Design Patterns & Principles (DPP)', attended: 24, total: 28, target: 75, faculty: 'Prof. Sumit Kumar' },
+    { subjectCode: 'CSUP521', subjectName: 'Machine Learning Lab', attended: 12, total: 12, target: 75, faculty: 'Prof. Loveleen Kumar' },
+    { subjectCode: 'CRT', subjectName: 'Campus Recruitment Training (CRT)', attended: 19, total: 22, target: 75, faculty: 'Prof. Mahender Beniwal' }
   ];
   StateManager.importErpAttendance(sampleData, true);
-  showToast('Loaded 6 sample semester courses into tracker!', 'success');
+  showToast('Loaded realistic semester courses into tracker!', 'success');
   renderAttendance();
   updateStats();
+}
+
+// ==========================================
+// ADD / EDIT COURSE MODAL MULTI-MODE LOGIC
+// ==========================================
+function setAttendanceEntryMode(mode) {
+  currentAttendanceEntryMode = mode;
+  
+  const pills = document.querySelectorAll('#attEntryModeGroup .att-mode-pill');
+  pills.forEach(p => {
+    p.classList.toggle('active', p.getAttribute('onclick').includes(mode));
+  });
+
+  const rowPT = document.getElementById('attRowPresentTotal');
+  const rowPA = document.getElementById('attRowPresentAbsent');
+  const rowPct = document.getElementById('attRowPercentTotal');
+
+  if (rowPT) rowPT.style.display = mode === 'present_total' ? 'flex' : 'none';
+  if (rowPA) rowPA.style.display = mode === 'present_absent' ? 'flex' : 'none';
+  if (rowPct) rowPct.style.display = mode === 'percent_total' ? 'flex' : 'none';
+
+  updateAttendanceModalPreview();
+}
+
+function handleModalInputChanged(sourceMode) {
+  let attended = parseInt(document.getElementById('attAttendedCount').value) || 0;
+  let total = parseInt(document.getElementById('attTotalCount').value) || 0;
+
+  if (sourceMode === 'present_absent') {
+    const present = parseInt(document.getElementById('attModePresentCount').value) || 0;
+    const absent = parseInt(document.getElementById('attModeAbsentCount').value) || 0;
+    attended = present;
+    total = present + absent;
+    document.getElementById('attAttendedCount').value = attended;
+    document.getElementById('attTotalCount').value = total;
+  } else if (sourceMode === 'percent_total') {
+    const pct = parseFloat(document.getElementById('attModeDirectPercent').value) || 0;
+    total = parseInt(document.getElementById('attModeDirectTotal').value) || 0;
+    attended = Math.round((pct / 100) * total);
+    document.getElementById('attAttendedCount').value = attended;
+    document.getElementById('attTotalCount').value = total;
+  } else if (sourceMode === 'present_total') {
+    const absent = Math.max(0, total - attended);
+    const pct = total > 0 ? (Math.round((attended / total) * 1000) / 10) : 0;
+    document.getElementById('attModePresentCount').value = attended;
+    document.getElementById('attModeAbsentCount').value = absent;
+    document.getElementById('attModeDirectPercent').value = pct;
+    document.getElementById('attModeDirectTotal').value = total;
+  }
+
+  updateAttendanceModalPreview();
+}
+
+function updateAttendanceModalPreview() {
+  const attendedInput = document.getElementById('attAttendedCount');
+  const totalInput = document.getElementById('attTotalCount');
+  const targetInput = document.getElementById('attTargetPercent');
+  const percentEl = document.getElementById('attLiveCalcPercent');
+  const breakdownEl = document.getElementById('attLiveCalcBreakdown');
+  const statusEl = document.getElementById('attLiveCalcStatus');
+
+  if (!attendedInput || !totalInput || !percentEl || !statusEl) return;
+
+  const attended = Math.max(0, parseInt(attendedInput.value) || 0);
+  const total = Math.max(0, parseInt(totalInput.value) || 0);
+  const target = parseInt(targetInput.value) || 75;
+
+  if (total === 0) {
+    percentEl.innerText = '0.0%';
+    percentEl.style.color = 'var(--text-muted)';
+    if (breakdownEl) breakdownEl.innerText = '(0 / 0 Classes)';
+    statusEl.innerText = 'Enter class counts';
+    statusEl.style.color = 'var(--text-muted)';
+    return;
+  }
+
+  const effectiveAttended = Math.min(attended, total);
+  const percent = Math.round((effectiveAttended / total) * 1000) / 10;
+  percentEl.innerText = `${percent}%`;
+  if (breakdownEl) breakdownEl.innerText = `(${effectiveAttended} Present / ${total} Total, ${total - effectiveAttended} Absent)`;
+
+  if (percent >= target) {
+    percentEl.style.color = 'var(--success)';
+    const safeBunks = Math.floor((effectiveAttended - ((target / 100) * total)) / (target / 100));
+    statusEl.innerText = `🟢 Safe (${safeBunks} Bunks Available)`;
+    statusEl.style.color = 'var(--success)';
+  } else {
+    percentEl.style.color = 'var(--danger)';
+    const num = ((target / 100) * total) - effectiveAttended;
+    const den = 1 - (target / 100);
+    const need = Math.ceil(num / den);
+    statusEl.innerText = `🔴 Shortage (Attend next ${need} classes straight)`;
+    statusEl.style.color = 'var(--danger)';
+  }
 }
 
 // Open Add or Edit Modal
@@ -1109,6 +1233,7 @@ function openAddAttendanceModal(editId = null) {
   const editIdInput = document.getElementById('attEditId');
 
   form.reset();
+  setAttendanceEntryMode('present_total');
 
   if (editId) {
     const list = StateManager.getAttendance();
@@ -1117,8 +1242,16 @@ function openAddAttendanceModal(editId = null) {
       editIdInput.value = item.id;
       document.getElementById('attSubjectCode').value = item.subjectCode;
       document.getElementById('attSubjectName').value = item.subjectName;
-      document.getElementById('attAttendedCount').value = item.originalAttended !== undefined ? item.originalAttended : item.attended;
-      document.getElementById('attTotalCount').value = item.originalTotal !== undefined ? item.originalTotal : item.total;
+      const att = item.originalAttended !== undefined ? item.originalAttended : item.attended;
+      const tot = item.originalTotal !== undefined ? item.originalTotal : item.total;
+      
+      document.getElementById('attAttendedCount').value = att;
+      document.getElementById('attTotalCount').value = tot;
+      document.getElementById('attModePresentCount').value = att;
+      document.getElementById('attModeAbsentCount').value = Math.max(0, tot - att);
+      document.getElementById('attModeDirectPercent').value = tot > 0 ? (Math.round((att / tot) * 1000) / 10) : 0;
+      document.getElementById('attModeDirectTotal').value = tot;
+      
       document.getElementById('attTargetPercent').value = item.target || 75;
       document.getElementById('attFacultyName').value = item.faculty || '';
       
@@ -1132,6 +1265,7 @@ function openAddAttendanceModal(editId = null) {
     document.getElementById('attTargetPercent').value = 75;
   }
 
+  updateAttendanceModalPreview();
   openModal('modalAddAttendance');
 }
 
@@ -1139,18 +1273,25 @@ function openAddAttendanceModal(editId = null) {
 function handleSaveAttendanceSubject(e) {
   e.preventDefault();
   const editId = document.getElementById('attEditId').value;
+  let attended = parseInt(document.getElementById('attAttendedCount').value) || 0;
+  let total = parseInt(document.getElementById('attTotalCount').value) || 0;
+  const target = parseInt(document.getElementById('attTargetPercent').value) || 75;
+
+  if (total <= 0 && attended > 0) {
+    total = attended;
+  }
+  if (attended > total) {
+    total = attended;
+  }
+
   const subjectData = {
     subjectCode: document.getElementById('attSubjectCode').value.trim().toUpperCase(),
     subjectName: document.getElementById('attSubjectName').value.trim(),
-    attended: parseInt(document.getElementById('attAttendedCount').value) || 0,
-    total: parseInt(document.getElementById('attTotalCount').value) || 0,
-    target: parseInt(document.getElementById('attTargetPercent').value) || 75,
+    attended: attended,
+    total: total,
+    target: target,
     faculty: document.getElementById('attFacultyName').value.trim()
   };
-
-  if (subjectData.attended > subjectData.total) {
-    subjectData.total = subjectData.attended;
-  }
 
   if (editId) {
     StateManager.updateAttendance(editId, subjectData);
@@ -1179,63 +1320,81 @@ function deleteAttendanceCourse(id) {
   }
 }
 
-// Intelligent Raw ERP Parser & Importer
+// ==========================================
+// INTELLIGENT ERP PARSER & BULK IMPORTER
+// ==========================================
 function parseErpRawText(rawText) {
+  if (!rawText) return [];
   const lines = rawText.split('\n');
   const parsedSubjects = [];
+
+  // 1. Detect Header columns if present
+  let colMap = null;
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    const l = lines[i].toLowerCase();
+    if ((l.includes('subject') || l.includes('course')) && (l.includes('present') || l.includes('absent') || l.includes('percentage') || l.includes('attended') || l.includes('total'))) {
+      const headers = lines[i].split(/\t|,| {2,}/).map(h => h.trim().toLowerCase()).filter(Boolean);
+      if (headers.length >= 3) {
+        colMap = {};
+        headers.forEach((h, idx) => {
+          if (h.includes('code')) colMap.code = idx;
+          else if (h === 'subject' || h === 'course' || h.includes('name')) colMap.name = idx;
+          else if (h.includes('type')) colMap.type = idx;
+          else if (h.includes('present') || h.includes('attended')) colMap.present = idx;
+          else if (h.includes('od') || h.includes('duty')) colMap.od = idx;
+          else if (h.includes('makeup') || h.includes('make up')) colMap.makeup = idx;
+          else if (h.includes('absent') || h.includes('missed')) colMap.absent = idx;
+          else if (h.includes('total') || h.includes('delivered') || h.includes('held')) colMap.total = idx;
+          else if (h.includes('percent') || h === '%') colMap.pct = idx;
+        });
+      }
+      break;
+    }
+  }
 
   lines.forEach(line => {
     line = line.trim();
     if (!line || line.length < 3) return;
 
     // Ignore header rows
-    if (line.toLowerCase().includes('subject code') || line.toLowerCase().includes('attendance %') || line.toLowerCase().includes('total classes')) {
+    const lowerLine = line.toLowerCase();
+    if (lowerLine.includes('attendance report') || (lowerLine.includes('subject') && lowerLine.includes('present') && lowerLine.includes('absent'))) {
       return;
     }
 
-    // Delimited parsing (Tab, Comma, Pipe)
-    let parts = [];
-    if (line.includes('\t')) {
-      parts = line.split('\t').map(p => p.trim()).filter(Boolean);
-    } else if (line.includes(',')) {
-      parts = line.split(',').map(p => p.trim()).filter(Boolean);
-    } else if (line.includes('|')) {
-      parts = line.split('|').map(p => p.trim()).filter(Boolean);
-    }
+    // Split by tab, comma, or 2+ spaces
+    const delimParts = line.split(/\t|,| {2,}/).map(p => p.trim()).filter(Boolean);
 
-    if (parts.length >= 3) {
-      // Find numbers in parts (attended & total)
-      const numbers = [];
-      const nonNumbers = [];
+    // If we have header colMap and matching row length
+    if (colMap && delimParts.length >= 4) {
+      let code = colMap.code !== undefined && delimParts[colMap.code] ? delimParts[colMap.code] : '';
+      let name = colMap.name !== undefined && delimParts[colMap.name] ? delimParts[colMap.name] : '';
+      
+      let present = colMap.present !== undefined ? parseInt(delimParts[colMap.present]) || 0 : 0;
+      let od = colMap.od !== undefined ? parseInt(delimParts[colMap.od]) || 0 : 0;
+      let makeup = colMap.makeup !== undefined ? parseInt(delimParts[colMap.makeup]) || 0 : 0;
+      let absent = colMap.absent !== undefined ? parseInt(delimParts[colMap.absent]) || 0 : 0;
+      let total = colMap.total !== undefined ? parseInt(delimParts[colMap.total]) || 0 : 0;
 
-      parts.forEach(p => {
-        // Check if pattern like "18/24"
-        if (p.includes('/')) {
-          const slashParts = p.split('/').map(s => parseInt(s)).filter(n => !isNaN(n));
-          if (slashParts.length >= 2) {
-            numbers.push(slashParts[0], slashParts[1]);
-            return;
-          }
+      const attended = present + od + makeup;
+      if (total <= 0) {
+        total = attended + absent;
+      }
+
+      if (total > 0) {
+        if (!code) {
+          const codeMatch = line.match(/\b([A-Za-z0-9]{2,6}[-\.][A-Za-z0-9]{1,4}|[A-Za-z]{2,5}\d{3,4}|CRT|DEVOPS)\b/i);
+          if (codeMatch) code = codeMatch[1];
         }
-        // Check if pure integer (ignore % values)
-        if (!p.includes('%') && /^\d+$/.test(p)) {
-          numbers.push(parseInt(p));
-        } else if (!p.includes('%')) {
-          nonNumbers.push(p);
+        if (!name || name === code) {
+          name = delimParts[2] || delimParts[1] || code;
         }
-      });
-
-      if (numbers.length >= 2) {
-        const attended = numbers[0];
-        const total = numbers[1];
-        const code = nonNumbers[0] || ('SUB-' + Math.floor(100 + Math.random() * 900));
-        const name = nonNumbers.length > 1 ? nonNumbers.slice(1).join(' ') : nonNumbers[0] || code;
 
         parsedSubjects.push({
-          subjectCode: code.toUpperCase(),
-          subjectName: name,
-          attended,
-          total,
+          subjectCode: (code || 'COURSE').toUpperCase().trim(),
+          subjectName: name.trim(),
+          attended: attended,
+          total: total,
           target: 75,
           faculty: 'Faculty Incharge'
         });
@@ -1243,35 +1402,147 @@ function parseErpRawText(rawText) {
       }
     }
 
-    // Fallback: Regex scan line for "CODE NAME ATTENDED TOTAL" or "NAME: ATTENDED/TOTAL"
-    // e.g. "CSUL501 DAA 22 25" or "Machine Learning: 17/24"
-    const slashMatch = line.match(/([A-Za-z0-9\s\-]+?)[:\s]+(\d+)\s*\/\s*(\d+)/);
-    if (slashMatch) {
-      const name = slashMatch[1].trim();
-      const attended = parseInt(slashMatch[2]);
-      const total = parseInt(slashMatch[3]);
-      parsedSubjects.push({
-        subjectCode: name.split(' ')[0].toUpperCase(),
-        subjectName: name,
-        attended,
-        total,
-        target: 75,
-        faculty: 'Faculty Incharge'
-      });
-      return;
+    // Delimited or Space separated fallback
+    let explicitPercentage = null;
+    const pctMatch = line.match(/([\d\.]+)\s*%/);
+    if (pctMatch) {
+      explicitPercentage = parseFloat(pctMatch[1]);
+    } else {
+      const endFloatMatch = line.match(/(\b\d{1,3}\.\d{1,2}\b)\s*$/);
+      if (endFloatMatch) {
+        explicitPercentage = parseFloat(endFloatMatch[1]);
+      }
     }
 
-    // Numbers at end of string
-    const endNumbersMatch = line.match(/^(.+?)\s+(\d+)\s+(\d+)(?:\s+[\d\.]+%)?$/);
-    if (endNumbersMatch) {
-      const name = endNumbersMatch[1].trim();
-      const attended = parseInt(endNumbersMatch[2]);
-      const total = parseInt(endNumbersMatch[3]);
+    let code = '';
+    const codeMatch = line.match(/\b([A-Za-z0-9]{2,6}[-\.][A-Za-z0-9]{1,4}|[A-Za-z]{2,5}\d{3,4}|CRT|DEVOPS)\b/i);
+    if (codeMatch) {
+      code = codeMatch[1].toUpperCase();
+    }
+
+    let lineWithoutPct = line;
+    if (explicitPercentage !== null) {
+      lineWithoutPct = line.replace(new RegExp(`\\b${explicitPercentage}(?:%)?\\b`), ' ');
+    }
+    lineWithoutPct = lineWithoutPct.replace(/([\d\.]+)\s*%/g, ' ');
+
+    const allNumbers = [];
+    const numRegex = /\b(\d+)\b/g;
+    let match;
+    while ((match = numRegex.exec(lineWithoutPct)) !== null) {
+      allNumbers.push(parseInt(match[1]));
+    }
+
+    let attended = null;
+    let total = null;
+
+    const presWordMatch = line.match(/(\d+)\s*(?:present|attended|att\b|pres\b)/i) || line.match(/(?:present|attended|att\b|pres\b)\s*[:=]?\s*(\d+)/i);
+    const absWordMatch = line.match(/(\d+)\s*(?:absent|missed|bunk|bunked|abs\b)/i) || line.match(/(?:absent|missed|bunk|bunked|abs\b)\s*[:=]?\s*(\d+)/i);
+    const totWordMatch = line.match(/(\d+)\s*(?:total|delivered|held|conducted)/i) || line.match(/(?:total|delivered|held|conducted)\s*[:=]?\s*(\d+)/i);
+
+    if (presWordMatch && absWordMatch) {
+      attended = parseInt(presWordMatch[1]);
+      const absent = parseInt(absWordMatch[1]);
+      total = attended + absent;
+    } else if (presWordMatch && totWordMatch) {
+      attended = parseInt(presWordMatch[1]);
+      total = parseInt(totWordMatch[1]);
+    } else if (absWordMatch && totWordMatch) {
+      const absent = parseInt(absWordMatch[1]);
+      total = parseInt(totWordMatch[1]);
+      attended = Math.max(0, total - absent);
+    }
+
+    if (attended === null || total === null) {
+      const slashMatch = line.match(/(\d+)\s*\/\s*(\d+)/);
+      if (slashMatch) {
+        const n1 = parseInt(slashMatch[1]);
+        const n2 = parseInt(slashMatch[2]);
+        attended = Math.min(n1, n2);
+        total = Math.max(n1, n2);
+      }
+    }
+
+    if ((attended === null || total === null) && allNumbers.length >= 2) {
+      let matchFound = false;
+      if (explicitPercentage !== null) {
+        for (let i = 0; i < allNumbers.length; i++) {
+          for (let j = i + 1; j < allNumbers.length; j++) {
+            const p = allNumbers[i];
+            const a = allNumbers[j];
+            const tot = p + a;
+            if (tot > 0) {
+              const calcPct = (p / tot) * 100;
+              if (Math.abs(calcPct - explicitPercentage) < 0.2) {
+                attended = p;
+                total = tot;
+                matchFound = true;
+                break;
+              }
+            }
+            for (let k = j + 1; k < allNumbers.length; k++) {
+              const odVal = allNumbers[j];
+              const absVal = allNumbers[k];
+              const attVal = allNumbers[i] + odVal;
+              const totVal = attVal + absVal;
+              if (totVal > 0) {
+                const calcPct = (attVal / totVal) * 100;
+                if (Math.abs(calcPct - explicitPercentage) < 0.2) {
+                  attended = attVal;
+                  total = totVal;
+                  matchFound = true;
+                  break;
+                }
+              }
+            }
+            if (matchFound) break;
+          }
+          if (matchFound) break;
+        }
+      }
+
+      if (!matchFound && explicitPercentage !== null) {
+        let bestDiff = 9999;
+        for (let i = 0; i < allNumbers.length; i++) {
+          for (let j = 0; j < allNumbers.length; j++) {
+            if (i !== j) {
+              const a = allNumbers[i];
+              const b = allNumbers[j];
+              if (a <= b && b > 0) {
+                const ratio = (a / b) * 100;
+                const diff = Math.abs(ratio - explicitPercentage);
+                if (diff < bestDiff && diff < 1.0) {
+                  bestDiff = diff;
+                  attended = a;
+                  total = b;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (attended !== null && total !== null && total > 0) {
+      let cleanName = line
+        .replace(/([\d\.]+\s*%)|(\b\d{1,3}\.\d{1,2}\b)/g, ' ')
+        .replace(/\b(\d+(?:st|nd|rd|th)?\s*sem(?:ester)?|\d+\s*credits?|present|absent|total|held|delivered|classes|sr\.?\s*no|theory|practical|lab|lecture|makeup|od)\b/gi, '')
+        .trim();
+
+      if (code) {
+        cleanName = cleanName.replace(new RegExp(code.replace('.', '\\.'), 'gi'), '').trim();
+      }
+      cleanName = cleanName.replace(/^\d+\s+/, '').replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim();
+
+      if (!cleanName || cleanName.length < 2) {
+        cleanName = code || 'Course Subject';
+      }
+
       parsedSubjects.push({
-        subjectCode: name.split(' ')[0].toUpperCase(),
-        subjectName: name,
-        attended,
-        total,
+        subjectCode: code || 'COURSE',
+        subjectName: cleanName,
+        attended: attended,
+        total: total,
         target: 75,
         faculty: 'Faculty Incharge'
       });
@@ -1279,6 +1550,59 @@ function parseErpRawText(rawText) {
   });
 
   return parsedSubjects;
+}
+
+// Live Parse Preview in Bulk Modal
+function handleBulkInputLivePreview() {
+  const text = document.getElementById('bulkAttendanceText').value.trim();
+  const container = document.getElementById('bulkParsePreviewContainer');
+  const countEl = document.getElementById('bulkParsedCount');
+  const tbody = document.getElementById('bulkParsePreviewTbody');
+
+  if (!text) {
+    if (container) container.style.display = 'none';
+    return;
+  }
+
+  const parsed = parseErpRawText(text);
+  if (parsed.length > 0) {
+    if (container) container.style.display = 'block';
+    if (countEl) countEl.innerText = parsed.length;
+    if (tbody) {
+      tbody.innerHTML = parsed.map(sub => {
+        const pct = Math.round((sub.attended / sub.total) * 1000) / 10;
+        const absent = sub.total - sub.attended;
+        const isSafe = pct >= 75;
+        const statusBadge = isSafe 
+          ? `<span style="color: var(--success); font-weight: 700;">🟢 Safe</span>` 
+          : `<span style="color: var(--danger); font-weight: 700;">🔴 Shortage</span>`;
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 6px 10px; font-weight: 700;">${sub.subjectCode}</td>
+            <td style="padding: 6px 10px;">${sub.subjectName}</td>
+            <td style="padding: 6px 10px; text-align: center; color: var(--success); font-weight: 700;">${sub.attended}</td>
+            <td style="padding: 6px 10px; text-align: center; color: var(--danger); font-weight: 700;">${absent}</td>
+            <td style="padding: 6px 10px; text-align: center; font-weight: 700;">${sub.total}</td>
+            <td style="padding: 6px 10px; text-align: center; font-weight: 800; color: ${isSafe ? 'var(--success)' : 'var(--danger)'};">${pct}%</td>
+            <td style="padding: 6px 10px;">${statusBadge}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  } else {
+    if (container) container.style.display = 'none';
+  }
+}
+
+// Load sample ERP raw text directly into the modal textarea for 1-click preview
+function loadSampleErpDemoDataIntoBulkBox() {
+  const sampleText = `CSUL501\tDesign and Analysis of Algorithms (DAA)\t32\t7\t39\t82.05%\nCSUL502\tMachine Learning (ML)\t21\t4\t25\t84.00%\nCSUL503\tCryptography & Network Security (CNS)\t18\t4\t22\t81.82%\nCSUL511\tDesign Patterns & Principles (DPP)\t24\t4\t28\t85.71%\nCSUP521\tMachine Learning Lab\t12\t0\t12\t100.00%\nCRT\tCampus Recruitment Training\t19\t3\t22\t86.36%`;
+  const textarea = document.getElementById('bulkAttendanceText');
+  if (textarea) {
+    textarea.value = sampleText;
+    handleBulkInputLivePreview();
+  }
 }
 
 // Handle ERP Import Submit
@@ -1294,10 +1618,12 @@ function handleBulkImportAttendance(e) {
     showToast(`Successfully parsed and imported ${parsedSubjects.length} courses from your ERP!`, 'success');
     closeModal('modalBulkAttendance');
     document.getElementById('formBulkAttendance').reset();
+    const previewContainer = document.getElementById('bulkParsePreviewContainer');
+    if (previewContainer) previewContainer.style.display = 'none';
     renderAttendance();
     updateStats();
   } else {
-    showToast('Could not extract attendance numbers. Please check format (e.g. CSUL501, DAA, 22, 25)', 'error');
+    showToast('Could not extract attendance numbers. Please check format (e.g. CSUL501, DAA, 32, 39)', 'error');
   }
 }
 

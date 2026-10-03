@@ -1838,73 +1838,151 @@ textarea.form-control {
   border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
-/* Quick Action Buttons */
-.att-actions-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto auto;
-  gap: 8px;
-  align-items: center;
-  margin-top: 4px;
+/* Attendify Mode Pills */
+.att-mode-pills {
+  display: flex;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  gap: 4px;
 }
 
-.btn-att-present {
+.att-mode-pill {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-radius: calc(var(--radius-sm) - 2px);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+
+.att-mode-pill.active {
+  background: var(--bg-card);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Attendify Class Stepper Controls & Action Row */
+.att-actions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.att-steppers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.att-stepper-group {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.att-stepper-btn {
+  background: var(--bg-subtle);
+  border: none;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.att-stepper-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.att-stepper-btn.minus:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.att-stepper-btn.plus-present {
   background: var(--success-light);
   color: var(--success-text);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  transition: var(--transition);
+  flex: 1;
 }
 
-.btn-att-present:hover {
+.att-stepper-btn.plus-present:hover {
   background: var(--success);
   color: #fff;
-  border-color: var(--success);
-  transform: translateY(-1px);
 }
 
-.btn-att-absent {
+.att-stepper-btn.plus-absent {
   background: var(--danger-light);
   color: var(--danger-text);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  transition: var(--transition);
+  flex: 1;
 }
 
-.btn-att-absent:hover {
+.att-stepper-btn.plus-absent:hover {
   background: var(--danger);
   color: #fff;
-  border-color: var(--danger);
-  transform: translateY(-1px);
+}
+
+.att-card-aux-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.att-next-projection {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.att-next-proj-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.att-next-proj-tag.pos {
+  color: var(--success);
+}
+
+.att-next-proj-tag.neg {
+  color: var(--danger);
 }
 
 .btn-icon-subtle {
   background: var(--bg-subtle);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   transition: var(--transition);
 }
 
@@ -1925,17 +2003,11 @@ textarea.form-control {
   color: var(--primary);
   border-color: var(--primary);
   font-weight: 800;
-  animation: rotate-once 0.3s ease;
 }
 
 .btn-icon-subtle.reset.active:hover {
   background: var(--primary);
   color: #fff;
-}
-
-@keyframes rotate-once {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(180deg); }
 }
 
 /* Simulated Card Highlight */
