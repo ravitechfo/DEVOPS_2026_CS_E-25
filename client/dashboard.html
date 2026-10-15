@@ -30,6 +30,9 @@
       <button type="button" class="nav-tab-btn" onclick="switchModule('timetable')">
         📅 <span>Time Table</span>
       </button>
+      <button type="button" class="nav-tab-btn" onclick="switchModule('library')">
+        📚 <span>Library &amp; PYQs</span> <span class="badge-new" style="margin-left: 3px;">NEW</span>
+      </button>
       <button type="button" class="nav-tab-btn" onclick="switchModule('gatepass')">
         🛡️ <span>Gate Pass</span> <span class="badge-new" style="margin-left: 3px;">NEW</span>
       </button>
@@ -44,6 +47,13 @@
           <div class="mega-dropdown-grid">
             <div class="dropdown-category">
               <div class="category-title">Academic &amp; Student Life</div>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchModule('library'); closeServicesDropdown();">
+                <span class="item-icon">📚</span>
+                <div class="item-info">
+                  <div class="item-name">Library &amp; PYQ Hub <span class="badge-new">NEW</span></div>
+                  <div class="item-desc">RTU Syllabi, 2023-25 Question Papers &amp; Notes</div>
+                </div>
+              </a>
               <a href="javascript:void(0)" class="dropdown-item" onclick="switchModule('timetable'); closeServicesDropdown();">
                 <span class="item-icon">📅</span>
                 <div class="item-info">
@@ -167,6 +177,14 @@
         </div>
         <div class="stat-icon-wrap stat-purple">🛡️</div>
       </div>
+      <div class="stat-card" style="cursor: pointer;" onclick="switchModule('library')">
+        <div class="stat-info">
+          <h4>Library &amp; PYQs</h4>
+          <div class="stat-number" id="statLibResourceCount">50+</div>
+          <div style="font-size: 0.74rem; font-weight: 700; color: var(--secondary); margin-top: 3px;">📚 7 Departments</div>
+        </div>
+        <div class="stat-icon-wrap stat-blue">📚</div>
+      </div>
       <div class="stat-card" style="cursor: pointer;" onclick="switchModule('notices')">
         <div class="stat-info">
           <h4>Active Notices</h4>
@@ -217,6 +235,16 @@
             <div class="hub-name">Hostel Gate Pass <span class="badge-new">NEW</span></div>
             <div class="hub-subtitle">Outing form &amp; Warden approval</div>
             <span class="hub-status-badge status-approved">QR Pass Live</span>
+          </div>
+        </div>
+
+        <!-- 2. Library Hub -->
+        <div class="hub-card" onclick="switchModule('library')">
+          <div class="hub-icon" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">📚</div>
+          <div class="hub-info">
+            <div class="hub-name">Library &amp; PYQ Hub <span class="badge-new">NEW</span></div>
+            <div class="hub-subtitle">Syllabi, 2023-25 Papers &amp; Notes</div>
+            <span class="hub-status-badge status-approved">All Branches</span>
           </div>
         </div>
 
@@ -593,6 +621,65 @@
       </div>
     </div>
 
+    <!-- ============================================== -->
+    <!-- MODULE 6: 📚 DIGITAL LIBRARY, SYLLABI & PYQs -->
+    <!-- ============================================== -->
+    <div id="module-library" class="module-content">
+      <div class="toolbar-row" style="flex-wrap: wrap; gap: 12px; margin-bottom: 1.25rem;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.35rem; color: var(--text-primary);">📚 Academic Digital Library &amp; PYQ Hub</h3>
+          <p style="margin: 3px 0 0 0; font-size: 0.84rem; color: var(--text-muted);">
+            All engineering departments, semester-wise subjects, RTU syllabus, 2023-2025 question papers, handwritten notes and books.
+          </p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <div class="search-box" style="min-width: 280px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="libSearchInput" placeholder="Search subject code, name, topic, author..." oninput="handleLibrarySearch(event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Department Selector Pills -->
+      <div class="lib-filters-bar">
+        <div>
+          <div style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;">
+            Select Engineering Department:
+          </div>
+          <div class="lib-dept-pills" id="libDeptPillsContainer">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Semester Filter Bar -->
+        <div class="lib-sem-bar">
+          <span class="sem-label">Semester:</span>
+          <button type="button" class="sem-pill active" onclick="setLibrarySemester('ALL')">All Semesters</button>
+          <button type="button" class="sem-pill" onclick="setLibrarySemester('1')">1st Sem</button>
+          <button type="button" class="sem-pill" onclick="setLibrarySemester('2')">2nd Sem</button>
+          <button type="button" class="sem-pill" onclick="setLibrarySemester('3')">3rd Sem</button>
+          <button type="button" class="sem-pill" onclick="setLibrarySemester('4')">4th Sem</button>
+          <button type="button" class="sem-pill" onclick="setLibrarySemester('5')">5th Sem</button>
+          <button type="button" class="sem-pill" onclick="setLibrarySemester('6')">6th Sem</button>
+          <button type="button" class="sem-pill" onclick="setLibrarySemester('7')">7th Sem</button>
+          <button type="button" class="sem-pill" onclick="setLibrarySemester('8')">8th Sem</button>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="lib-category-tabs">
+        <button type="button" class="lib-cat-btn active" onclick="setLibraryCategoryTab('all')">📂 All Materials</button>
+        <button type="button" class="lib-cat-btn" onclick="setLibraryCategoryTab('syllabus')">📋 Official Syllabus</button>
+        <button type="button" class="lib-cat-btn" onclick="setLibraryCategoryTab('pyq')">📝 PYQ Question Papers (2023-2025)</button>
+        <button type="button" class="lib-cat-btn" onclick="setLibraryCategoryTab('books')">📖 Standard Books &amp; Notes</button>
+        <button type="button" class="lib-cat-btn" onclick="setLibraryCategoryTab('videos')">🎥 Video Playlists</button>
+      </div>
+
+      <!-- Dynamic Subject Resource Cards Grid -->
+      <div class="lib-cards-grid" id="libCardsGrid">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
 
   </div> <!-- /main-wrapper -->
 
@@ -1160,6 +1247,84 @@
       <div class="modal-footer" style="justify-content: space-between;">
         <button type="button" class="btn btn-secondary" onclick="closeModal('modalViewGatePass')">Close</button>
         <button type="button" class="btn btn-primary" onclick="simulatePrintGatePass()">🖨️ Print / Download PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: SYLLABUS UNIT-WISE PREVIEW -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalSyllabusView">
+    <div class="modal-dialog" style="max-width: 680px;">
+      <div class="modal-header">
+        <div>
+          <span id="sylSubjectCode" class="subject-code-tag">CSUL501</span>
+          <h4 class="modal-title" id="sylSubjectName" style="margin-top: 4px;">Course Syllabus</h4>
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('modalSyllabusView')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; background: var(--bg-subtle); padding: 10px 14px; border-radius: var(--radius-sm);">
+          <div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);" id="sylFacultyLead">Lead Faculty: Prof. Neetu Agrawal</div>
+            <div style="font-size: 0.74rem; color: var(--text-muted);" id="sylCredits">Credits: 4 | Affiliated: RTU Kota Curriculum</div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" onclick="simulateDownloadSyllabus()">
+            📥 Official PDF
+          </button>
+        </div>
+
+        <div id="sylUnitsContainer">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalSyllabusView')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: PYQ PAPER PREVIEW & DOWNLOAD -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalPyqView">
+    <div class="modal-dialog" style="max-width: 520px;">
+      <div class="modal-header">
+        <div>
+          <span class="status-pill status-approved" style="font-size: 0.7rem;">Verified RTU Exam Paper</span>
+          <h4 class="modal-title" id="pyqModalTitle" style="margin-top: 4px;">Question Paper</h4>
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('modalPyqView')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; background: var(--bg-subtle); margin-bottom: 1rem;">
+          <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 4px 0; color: var(--text-muted);">Subject Code:</td>
+              <td style="padding: 4px 0; font-weight: 700;" id="pyqModalSubjectCode">--</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: var(--text-muted);">Examination:</td>
+              <td style="padding: 4px 0; font-weight: 700;" id="pyqModalTerm">--</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: var(--text-muted);">Maximum Marks:</td>
+              <td style="padding: 4px 0; font-weight: 700;" id="pyqModalMarks">70 Marks</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: var(--text-muted);">Solutions &amp; Answer Key:</td>
+              <td style="padding: 4px 0; font-weight: 700; color: var(--success);" id="pyqModalSolutions">✓ Detailed Solved Paper Included</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.6;">
+          📄 File contains complete Part A (Short 2 marks questions), Part B (Analytical 4 marks questions) and Part C (Numerical/Design 10 marks problems) with step-by-step solutions verified by SKIT faculty.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalPyqView')">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="simulateDownloadPaper()">📥 Download PDF Paper</button>
       </div>
     </div>
   </div>

@@ -60,6 +60,9 @@
         🛡️ <span>Gate Pass Desk</span>
         <span id="badgePendingGatePasses" class="status-pill status-pending" style="font-size: 0.7rem; padding: 2px 7px; margin-left: 4px; display: inline-block;">1</span>
       </button>
+      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('library')">
+        📚 <span>Library Manager</span>
+      </button>
 
       <!-- ⚡ More Admin Desks Dropdown -->
       <div class="nav-dropdown-wrapper" id="adminDesksDropdownWrap">
@@ -155,6 +158,14 @@
           <div class="stat-number" id="adminStatVerifications" style="color: var(--primary);">0</div>
         </div>
         <div class="stat-icon-wrap stat-purple">🎓</div>
+      </div>
+      <div class="stat-card" style="cursor: pointer;" onclick="switchAdminTab('library')">
+        <div class="stat-info">
+          <h4>Library Curriculum</h4>
+          <div class="stat-number" id="adminStatLibCourses">12</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">All Departments</div>
+        </div>
+        <div class="stat-icon-wrap stat-blue">📚</div>
       </div>
       <div class="stat-card">
         <div class="stat-info">
@@ -435,6 +446,51 @@
       </div>
     </div>
 
+    <!-- ============================================== -->
+    <!-- TAB 6: 📚 LIBRARY CURRICULUM & RESOURCE DESK -->
+    <!-- ============================================== -->
+    <div id="admintab-library" class="module-content">
+      <div class="toolbar-row" style="flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.35rem;">📚 Department Curriculum &amp; Library Resource Desk</h3>
+          <p style="margin: 3px 0 0 0; font-size: 0.84rem; color: var(--text-muted);">
+            Manage RTU syllabi, previous years exam papers (2023-2025), faculty reference books, and department repositories.
+          </p>
+        </div>
+        <div>
+          <button type="button" class="btn btn-primary" onclick="openModal('modalAdminAddLibResource')">
+            + Add New Course Resource
+          </button>
+        </div>
+      </div>
+
+      <!-- Department Filter Buttons -->
+      <div class="lib-filters-bar" style="margin-top: 1rem;">
+        <div class="lib-dept-pills" id="adminLibDeptPills">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <div class="table-container" style="margin-top: 1rem;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Course Title</th>
+              <th>Dept &amp; Sem</th>
+              <th>Faculty Lead</th>
+              <th>Syllabus Units</th>
+              <th>PYQ Papers</th>
+              <th>Books &amp; Notes</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminLibTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
 
   </div> <!-- /main-wrapper -->
 
@@ -687,6 +743,81 @@
     </div>
   </div>
 
+  <!-- Modal: Add New Library Course Resource -->
+  <div class="modal-backdrop" id="modalAdminAddLibResource">
+    <div class="modal-dialog" style="max-width: 620px;">
+      <div class="modal-header">
+        <h4 class="modal-title">📚 Add New Department Course &amp; Curriculum</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalAdminAddLibResource')">&times;</button>
+      </div>
+      <form id="formAdminAddLibResource" onsubmit="handleAdminAddLibResource(event)">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="adminLibDept">Engineering Department</label>
+              <select id="adminLibDept" class="form-control" required>
+                <option value="CSE">Computer Science &amp; Engineering</option>
+                <option value="IT">Information Technology</option>
+                <option value="AIDS">AI &amp; Data Science</option>
+                <option value="ECE">Electronics &amp; Communication</option>
+                <option value="EE">Electrical Engineering</option>
+                <option value="ME">Mechanical Engineering</option>
+                <option value="CE">Civil Engineering</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="adminLibSem">Semester</label>
+              <select id="adminLibSem" class="form-control" required>
+                <option value="1">1st Semester</option>
+                <option value="2">2nd Semester</option>
+                <option value="3">3rd Semester</option>
+                <option value="4">4th Semester</option>
+                <option value="5" selected>5th Semester</option>
+                <option value="6">6th Semester</option>
+                <option value="7">7th Semester</option>
+                <option value="8">8th Semester</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="adminLibCode">Subject Code</label>
+              <input type="text" id="adminLibCode" class="form-control" placeholder="e.g. CSUL505" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="adminLibCredits">Credits</label>
+              <input type="number" id="adminLibCredits" class="form-control" value="4" min="1" max="6" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="adminLibName">Course Title / Name</label>
+            <input type="text" id="adminLibName" class="form-control" placeholder="e.g. Mobile Computing &amp; IoT" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="adminLibFaculty">Lead Faculty / Professor</label>
+            <input type="text" id="adminLibFaculty" class="form-control" placeholder="e.g. Dr. Rajesh Kumar" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="adminLibPyqTitle">Initial RTU PYQ Paper (Optional)</label>
+            <input type="text" id="adminLibPyqTitle" class="form-control" placeholder="e.g. RTU Main Exam Paper 2025">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="adminLibBook">Primary Reference Book (Optional)</label>
+            <input type="text" id="adminLibBook" class="form-control" placeholder="e.g. Mobile Communications by Jochen Schiller">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalAdminAddLibResource')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Course Resource</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="js/data.js"></script>

@@ -195,6 +195,7 @@ function switchModule(moduleName) {
 
   // Trigger module-specific renders
   if (moduleName === 'gatepass') renderGatePassModule();
+  if (moduleName === 'library') renderLibraryModule();
 }
 
 // Render All Modules & Stats
@@ -206,6 +207,7 @@ function renderAllModules() {
   renderComplaints();
   renderFacilitiesAndBookings();
   renderGatePassModule();
+  renderLibraryModule();
   initGatePassFormDefaults();
   updateStats();
 }
@@ -217,6 +219,7 @@ function updateStats() {
   const bookings = StateManager.getBookings();
   const overallStats = StateManager.calculateOverallStats();
   const gatePasses = StateManager.getGatePasses();
+  const libResources = StateManager.getLibraryResources();
 
   const noticeCountEl = document.getElementById('statNoticeCount');
   if (noticeCountEl) noticeCountEl.innerText = notices.length;
@@ -235,6 +238,12 @@ function updateStats() {
   if (gpStatEl) {
     const activePass = gatePasses.find(g => g.status === 'Approved' || g.status === 'Out of Campus');
     gpStatEl.innerText = activePass ? (activePass.status === 'Out of Campus' ? '🚶 Out (Gate 1)' : '✓ 1 Active') : `${gatePasses.length} Passes`;
+  }
+
+  // Library Count
+  const libStatEl = document.getElementById('statLibResourceCount');
+  if (libStatEl) {
+    libStatEl.innerText = `${libResources.length} Courses`;
   }
 
   const attPercentEl = document.getElementById('statAttendancePercent');
@@ -2144,3 +2153,235 @@ function simulatePrintGatePass() {
 }
 
 // ==========================================================================
+// 📚 ACADEMIC DIGITAL LIBRARY, SYLLABI & PYQ HUB CONTROLLER
+// ==========================================================================
+let currentLibDept = 'ALL';
+let currentLibSem = 'ALL';
+let currentLibCategory = 'all';
+let currentLibSearch = '';
+
+function renderLibraryModule() {
+  const depts = StateManager.getLibraryDepartments();
+
+  // 1. Render Department Pills
+  const deptsContainer = document.getElementById('libDeptPillsContainer');
+  if (deptsContainer) {
+    deptsContainer.innerHTML = `
+      <button type="button" class="lib-dept-btn ${currentLibDept === 'ALL' ? 'active' : ''}" onclick="setLibraryDepartment('ALL')">
+        🏛️ All Departments
+      </button>
+      ${depts.map(d => `
+        <button type="button" class="lib-dept-btn ${currentLibDept === d.id ? 'active' : ''}" onclick="setLibraryDepartment('${d.id}')">
+          <span>${d.icon}</span> <span>${d.code}</span>
+        </button>
+      `).join('')}
+    `;
+  }
+
+  // 2. Render Cards Grid
+  renderLibraryCardsGrid();
+}
+
+function renderLibraryCardsGrid() {
+  const gridEl = document.getElementById('libCardsGrid');
+  if (!gridEl) return;
+
+  const resources = StateManager.getLibraryResources({
+    dept: currentLibDept,
+    sem: currentLibSem,
+    query: currentLibSearch
+  });
+
+  if (resources.length === 0) {
+    gridEl.innerHTML = `
+      <div style="grid-column: 1 / -1; background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: var(--radius-md); padding: 3rem; text-align: center;">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;">📚</div>
+        <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">No Course Resources Found</h4>
+        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
+          No subjects matching department '${currentLibDept}' and semester '${currentLibSem}'. Try clearing the search filter.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  gridEl.innerHTML = resources.map(r => {
+    const pyqs = r.pyqs || [];
+    const materials = r.materials || [];
+    const videos = r.videos || [];
+
+    const showSyllabus = (currentLibCategory === 'all' || currentLibCategory === 'syllabus');
+    const showPyq = (currentLibCategory === 'all' || currentLibCategory === 'pyq');
+    const showBooks = (currentLibCategory === 'all' || currentLibCategory === 'books');
+    const showVideos = (currentLibCategory === 'all' || currentLibCategory === 'videos');
+
+    return `
+      <div class="subject-resource-card">
+        <div class="subject-card-header">
+          <div>
+            <span class="subject-code-tag">${r.subjectCode}</span>
+            <span class="subject-sem-tag" style="margin-left: 6px;">${r.sem}th Semester • ${r.credits} Credits</span>
+          </div>
+          <span class="role-pill role-student" style="font-size: 0.65rem;">${r.dept}</span>
+        </div>
+
+        <div class="subject-title">${r.subjectName}</div>
+        <div class="subject-faculty">Lead: ${r.facultyLead}</div>
+
+        <!-- 1. Syllabus Preview Section -->
+        ${showSyllabus ? `
+          <div class="resource-section-block">
+            <div class="res-section-title">
+              <span>📋 Official Syllabus</span>
+              <span style="font-size: 0.7rem; color: var(--primary); cursor: pointer;" onclick="viewSyllabusModal('${r.id}')">View Units 1-5 ➔</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-subtle); padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.76rem;">
+              <span>5 Units Detailed Breakdown</span>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.7rem;" onclick="viewSyllabusModal('${r.id}')">
+                Preview Syllabus
+              </button>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- 2. PYQs Section -->
+        ${showPyq && pyqs.length > 0 ? `
+          <div class="resource-section-block">
+            <div class="res-section-title">
+              <span>📝 Past Year Papers (PYQ)</span>
+              <span style="font-size: 0.68rem; color: var(--text-muted);">${pyqs.length} Papers</span>
+            </div>
+            <div class="pyq-chips-list">
+              ${pyqs.map(p => `
+                <button type="button" class="pyq-chip-btn" onclick="viewPyqModal('${r.id}', '${p.year}', '${p.term}')" title="${p.title}">
+                  <span class="dl-icon">📄</span>
+                  <span>${p.year} (${p.term})</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- 3. Notes & Books Section -->
+        ${showBooks && materials.length > 0 ? `
+          <div class="resource-section-block">
+            <div class="res-section-title">
+              <span>📖 Handwritten Notes &amp; Books</span>
+              <span style="font-size: 0.68rem; color: var(--text-muted);">${materials.length} Files</span>
+            </div>
+            <div class="materials-list-compact">
+              ${materials.slice(0, 3).map(m => `
+                <div class="mat-item-row" onclick="simulateDownloadResource('${m.title}')">
+                  <span class="mat-title" title="${m.title}">📥 ${m.title}</span>
+                  <span class="mat-size">${m.size}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- 4. Video Lectures -->
+        ${showVideos && videos.length > 0 ? `
+          <div class="resource-section-block">
+            <div class="res-section-title">
+              <span>🎥 Video Lectures</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              ${videos.map(v => `
+                <a href="${v.link}" target="_blank" class="mat-item-row" style="text-decoration: none;">
+                  <span class="mat-title">▶️ ${v.title}</span>
+                  <span class="mat-size" style="color: var(--secondary); font-weight: 700;">${v.platform}</span>
+                </a>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function setLibraryDepartment(dept) {
+  currentLibDept = dept;
+  renderLibraryModule();
+}
+
+function setLibrarySemester(sem) {
+  currentLibSem = sem;
+  const pills = document.querySelectorAll('.lib-sem-bar .sem-pill');
+  pills.forEach(p => p.classList.toggle('active', p.innerText.startsWith(sem) || (sem === 'ALL' && p.innerText.includes('All'))));
+  renderLibraryCardsGrid();
+}
+
+function setLibraryCategoryTab(cat) {
+  currentLibCategory = cat;
+  const btns = document.querySelectorAll('.lib-category-tabs .lib-cat-btn');
+  btns.forEach(b => b.classList.toggle('active', b.getAttribute('onclick').includes(cat)));
+  renderLibraryCardsGrid();
+}
+
+function handleLibrarySearch(e) {
+  currentLibSearch = e.target.value;
+  renderLibraryCardsGrid();
+}
+
+function viewSyllabusModal(id) {
+  const r = StateManager.getLibraryResourceById(id);
+  if (!r) return;
+
+  document.getElementById('sylSubjectCode').innerText = r.subjectCode;
+  document.getElementById('sylSubjectName').innerText = `${r.subjectName} Syllabus`;
+  document.getElementById('sylFacultyLead').innerText = `Lead Faculty: ${r.facultyLead} | Dept of ${r.dept}`;
+  document.getElementById('sylCredits').innerText = `Semester: ${r.sem}th • Credits: ${r.credits} • RTU Scheme`;
+
+  const container = document.getElementById('sylUnitsContainer');
+  const units = (r.syllabus && r.syllabus.units) ? r.syllabus.units : [];
+
+  if (units.length === 0) {
+    container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem;">Standard RTU 5-unit curriculum applies.</p>`;
+  } else {
+    container.innerHTML = units.map(u => `
+      <div class="syllabus-unit-accordion">
+        <div class="syllabus-unit-head">
+          <span>Unit ${u.unit}: ${u.title}</span>
+          <span style="font-size: 0.72rem; color: var(--primary);">Exam Weightage: 14 Marks</span>
+        </div>
+        <div class="syllabus-unit-body">
+          ${u.topics}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  openModal('modalSyllabusView');
+}
+
+function viewPyqModal(id, year, term) {
+  const r = StateManager.getLibraryResourceById(id);
+  if (!r) return;
+
+  const pyq = (r.pyqs || []).find(p => String(p.year) === String(year) && p.term === term) || (r.pyqs || [])[0];
+  if (!pyq) return;
+
+  document.getElementById('pyqModalTitle').innerText = pyq.title;
+  document.getElementById('pyqModalSubjectCode').innerText = `${r.subjectCode} - ${r.subjectName}`;
+  document.getElementById('pyqModalTerm').innerText = `${pyq.term} (${pyq.year})`;
+  document.getElementById('pyqModalMarks').innerText = pyq.marks || '70 Marks';
+  document.getElementById('pyqModalSolutions').innerText = pyq.solutionsAvailable ? '✓ Official Verified Answers & Detailed Steps Included' : 'Question Paper PDF';
+
+  openModal('modalPyqView');
+}
+
+function simulateDownloadPaper() {
+  closeModal('modalPyqView');
+  showToast('Downloading RTU Exam Paper & Answer Key PDF...', 'success');
+}
+
+function simulateDownloadSyllabus() {
+  showToast('Downloading Official RTU Syllabus Document (PDF)...', 'success');
+}
+
+function simulateDownloadResource(title) {
+  showToast(`Downloading: ${title}...`, 'success');
+}
+

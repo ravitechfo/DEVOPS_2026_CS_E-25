@@ -12,6 +12,8 @@ const StateManager = {
     COLLEGES: 'smart_campus_colleges',
     VERIFICATIONS: 'smart_campus_verifications',
     GATE_PASSES: 'smart_campus_gate_passes',
+    LIBRARY_DEPTS: 'smart_campus_lib_depts',
+    LIBRARY_RESOURCES: 'smart_campus_lib_resources',
     USER: 'smart_campus_user'
   },
 
@@ -45,6 +47,12 @@ const StateManager = {
     }
     if (!localStorage.getItem(this.KEYS.GATE_PASSES) || JSON.parse(localStorage.getItem(this.KEYS.GATE_PASSES) || '[]').length === 0) {
       localStorage.setItem(this.KEYS.GATE_PASSES, JSON.stringify(INITIAL_DATA.gatePasses || []));
+    }
+    if (!localStorage.getItem(this.KEYS.LIBRARY_DEPTS)) {
+      localStorage.setItem(this.KEYS.LIBRARY_DEPTS, JSON.stringify(INITIAL_DATA.libraryDepartments || []));
+    }
+    if (!localStorage.getItem(this.KEYS.LIBRARY_RESOURCES) || JSON.parse(localStorage.getItem(this.KEYS.LIBRARY_RESOURCES) || '[]').length === 0) {
+      localStorage.setItem(this.KEYS.LIBRARY_RESOURCES, JSON.stringify(INITIAL_DATA.libraryResources || []));
     }
     if (!localStorage.getItem(this.KEYS.ATTENDANCE) || JSON.parse(localStorage.getItem(this.KEYS.ATTENDANCE) || '[]').length === 0) {
       localStorage.setItem(this.KEYS.ATTENDANCE, JSON.stringify(INITIAL_DATA.attendance || []));
@@ -743,6 +751,64 @@ const StateManager = {
   },
 
   // ==========================================
+  // 📚 LIBRARY, SYLLABI & PYQ RESOURCES STATE API
+  // ==========================================
+  getLibraryDepartments() {
+    return JSON.parse(localStorage.getItem(this.KEYS.LIBRARY_DEPTS) || JSON.stringify(INITIAL_DATA.libraryDepartments || []));
+  },
+
+  getLibraryResources(filters = {}) {
+    let list = JSON.parse(localStorage.getItem(this.KEYS.LIBRARY_RESOURCES) || JSON.stringify(INITIAL_DATA.libraryResources || []));
+    
+    if (filters.dept && filters.dept !== 'ALL') {
+      list = list.filter(r => r.dept.toUpperCase() === filters.dept.toUpperCase());
+    }
+
+    if (filters.sem && filters.sem !== 'ALL') {
+      list = list.filter(r => String(r.sem) === String(filters.sem));
+    }
+
+    if (filters.query && filters.query.trim() !== '') {
+      const q = filters.query.toLowerCase().trim();
+      list = list.filter(r => {
+        const inCode = (r.subjectCode || '').toLowerCase().includes(q);
+        const inName = (r.subjectName || '').toLowerCase().includes(q);
+        const inFaculty = (r.facultyLead || '').toLowerCase().includes(q);
+        const inUnits = (r.syllabus && r.syllabus.units) ? r.syllabus.units.some(u => (u.title || '').toLowerCase().includes(q) || (u.topics || '').toLowerCase().includes(q)) : false;
+        const inPyq = (r.pyqs || []).some(p => (p.title || '').toLowerCase().includes(q));
+        const inBooks = (r.materials || []).some(m => (m.title || '').toLowerCase().includes(q) || (m.author || '').toLowerCase().includes(q));
+        return inCode || inName || inFaculty || inUnits || inPyq || inBooks;
+      });
+    }
+
+    return list;
+  },
+
+  getLibraryResourceById(id) {
+    const list = JSON.parse(localStorage.getItem(this.KEYS.LIBRARY_RESOURCES) || '[]');
+    return list.find(r => r.id === id) || null;
+  },
+
+  addLibraryResource(resourceData) {
+    const list = JSON.parse(localStorage.getItem(this.KEYS.LIBRARY_RESOURCES) || '[]');
+    const newRes = {
+      id: 'lib-' + Date.now(),
+      pyqs: [],
+      materials: [],
+      videos: [],
+      syllabus: { officialDoc: 'Official_Syllabus.pdf', units: [] },
+      ...resourceData
+    };
+    list.unshift(newRes);
+    localStorage.setItem(this.KEYS.LIBRARY_RESOURCES, JSON.stringify(list));
+    return newRes;
+  },
+
+  deleteLibraryResource(id) {
+    let list = JSON.parse(localStorage.getItem(this.KEYS.LIBRARY_RESOURCES) || '[]');
+    list = list.filter(r => r.id !== id);
+    localStorage.setItem(this.KEYS.LIBRARY_RESOURCES, JSON.stringify(list));
+  }
 };
 
 // UI Notification Toasts

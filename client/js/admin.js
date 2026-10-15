@@ -52,12 +52,14 @@ function switchAdminTab(tabName) {
   if (targetSection) targetSection.classList.add('active');
 
   if (tabName === 'gatepass') renderAdminGatePasses();
+  if (tabName === 'library') renderAdminLibrary();
 }
 
 function renderAdminAll() {
   renderAdminNotices();
   renderAdminVerifications();
   renderAdminGatePasses();
+  renderAdminLibrary();
   renderAdminTimetable();
   renderAdminGrievances();
   renderAdminLostFound();
@@ -72,6 +74,7 @@ function updateAdminStats() {
   const lostFound = StateManager.getLostFound();
   const bookings = StateManager.getBookings();
   const gatePasses = StateManager.getGatePasses();
+  const libResources = StateManager.getLibraryResources();
 
   const pendingVerifications = verifications.filter(v => v.status === 'Pending').length;
   const pendingGatePasses = gatePasses.filter(g => g.status === 'Pending').length;
@@ -102,6 +105,9 @@ function updateAdminStats() {
   const outStatEl = document.getElementById('adminStatOutsideStudents');
   if (outStatEl) outStatEl.innerText = outStudents;
 
+  // Library Course Count
+  const libStatEl = document.getElementById('adminStatLibCourses');
+  if (libStatEl) libStatEl.innerText = libResources.length;
 
   const filterCountEl = document.getElementById('countPendingFilter');
   if (filterCountEl) filterCountEl.innerText = pendingVerifications;
@@ -779,4 +785,125 @@ function adminPunchPass(passId, punchType) {
   updateAdminStats();
 }
 
+// ==========================================
+// 📚 LIBRARY & CURRICULUM DESK CONTROLLER
+// ==========================================
+let currentAdminLibDept = 'ALL';
+
+function renderAdminLibrary() {
+  const depts = StateManager.getLibraryDepartments();
+  const pillsContainer = document.getElementById('adminLibDeptPills');
+  if (pillsContainer) {
+    pillsContainer.innerHTML = `
+      <button type="button" class="lib-dept-btn ${currentAdminLibDept === 'ALL' ? 'active' : ''}" onclick="filterAdminLibDept('ALL')">
+        🏛️ All Departments
+      </button>
+      ${depts.map(d => `
+        <button type="button" class="lib-dept-btn ${currentAdminLibDept === d.id ? 'active' : ''}" onclick="filterAdminLibDept('${d.id}')">
+          <span>${d.icon}</span> <span>${d.code}</span>
+        </button>
+      `).join('')}
+    `;
+  }
+
+  const tbody = document.getElementById('adminLibTableBody');
+  if (!tbody) return;
+
+  const resources = StateManager.getLibraryResources({
+    dept: currentAdminLibDept
+  });
+
+  if (resources.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">No courses found in department '${currentAdminLibDept}'.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = resources.map(r => {
+    const units = (r.syllabus && r.syllabus.units) ? r.syllabus.units.length : 0;
+    const pyqs = (r.pyqs || []).length;
+    const mats = (r.materials || []).length;
+
+    return `
+      <tr>
+        <td><strong style="color: var(--primary); font-family: monospace;">${r.subjectCode}</strong></td>
+        <td>
+          <div style="font-weight: 700;">${r.subjectName}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${r.credits} Credits</div>
+        </td>
+        <td>
+          <span class="role-pill role-student" style="font-size: 0.7rem;">${r.dept}</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 4px;">Sem ${r.sem}</span>
+        </td>
+        <td><div style="font-size: 0.8rem; font-weight: 600;">${r.facultyLead}</div></td>
+        <td><span class="status-pill status-approved" style="font-size: 0.7rem;">${units} Units Covered</span></td>
+        <td><span class="status-pill status-pending" style="font-size: 0.7rem;">${pyqs} Exam Papers</span></td>
+        <td><span style="font-size: 0.78rem; font-weight: 600;">${mats} Notes / Books</span></td>
+        <td style="text-align: right;">
+          <button type="button" class="btn btn-danger btn-sm" onclick="handleDeleteAdminLibResource('${r.id}')">
+            🗑️ Remove
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterAdminLibDept(dept) {
+  currentAdminLibDept = dept;
+  renderAdminLibrary();
+}
+
+function handleAdminAddLibResource(event) {
+  event.preventDefault();
+
+  const dept = document.getElementById('adminLibDept').value;
+  const sem = parseInt(document.getElementById('adminLibSem').value);
+  const code = document.getElementById('adminLibCode').value;
+  const credits = parseInt(document.getElementById('adminLibCredits').value);
+  const name = document.getElementById('adminLibName').value;
+  const faculty = document.getElementById('adminLibFaculty').value;
+  const pyqTitle = document.getElementById('adminLibPyqTitle').value;
+  const book = document.getElementById('adminLibBook').value;
+
+  const newResource = {
+    dept,
+    sem,
+    subjectCode: code,
+    subjectName: name,
+    credits,
+    facultyLead: faculty,
+    syllabus: {
+      officialDoc: `${code}_Syllabus_2026.pdf`,
+      units: [
+        { unit: 1, title: 'Foundations & Architecture', topics: 'Core concepts, theoretical models and historical context.' },
+        { unit: 2, title: 'Design & Principles', topics: 'Structural specifications, analysis and standard methodologies.' },
+        { unit: 3, title: 'Implementation & Case Studies', topics: 'Algorithm implementation, execution steps and practical demonstrations.' },
+        { unit: 4, title: 'Optimization & Security', topics: 'Efficiency analysis, runtime optimizations and vulnerability protection.' },
+        { unit: 5, title: 'Advanced Topics & Emerging Trends', topics: 'Modern industrial research topics and capstone applications.' }
+      ]
+    },
+    pyqs: pyqTitle ? [
+      { year: 2025, term: 'RTU End-Term', title: pyqTitle, marks: '70 Marks', solutionsAvailable: true }
+    ] : [],
+    materials: book ? [
+      { type: 'Standard Book', title: book, author: faculty, size: '18.4 MB', verified: true }
+    ] : []
+  };
+
+  StateManager.addLibraryResource(newResource);
+  closeModal('modalAdminAddLibResource');
+  document.getElementById('formAdminAddLibResource').reset();
+  renderAdminLibrary();
+  updateAdminStats();
+  showToast(`Course ${code} (${name}) created and added to library curriculum!`, 'success');
+}
+
+function handleDeleteAdminLibResource(id) {
+  if (confirm('Are you sure you want to remove this course and its study resources?')) {
+    StateManager.deleteLibraryResource(id);
+    renderAdminLibrary();
+    updateAdminStats();
+    showToast('Course resource removed from campus curriculum.', 'info');
+  }
+}
 
