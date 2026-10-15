@@ -852,21 +852,28 @@ body {
   background: var(--bg-subtle);
 }
 
-/* Modals */
+/* Modals & Backdrop Layering */
+body.modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  z-index: 1000;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
   display: none;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 2.5rem 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .modal-backdrop.open {
@@ -880,11 +887,33 @@ body {
   border-radius: var(--radius-lg);
   max-width: 580px;
   width: 100%;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
-  max-height: 90vh;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.55);
+  margin: auto;
+  max-height: calc(100vh - 5rem);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  animation: modalScaleUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-dialog > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .modal-header {
@@ -894,6 +923,7 @@ body {
   justify-content: space-between;
   align-items: center;
   background: var(--bg-subtle);
+  flex-shrink: 0;
 }
 
 .modal-title {
@@ -917,8 +947,28 @@ body {
 }
 
 .modal-body {
-  padding: 1.75rem;
-  overflow-y: auto;
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--border-hover);
+  border-radius: 999px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
 }
 
 .modal-footer {
@@ -928,6 +978,7 @@ body {
   justify-content: flex-end;
   gap: 10px;
   background: var(--bg-subtle);
+  flex-shrink: 0;
 }
 
 /* Forms */
@@ -2139,4 +2190,402 @@ textarea.form-control {
   max-width: 520px;
   line-height: 1.5;
 }
+
+/* ==========================================================================
+   ✨ ANTI-CLUSTERING UI: MEGA DROPDOWN & SERVICES HUB NAVIGATION
+   ========================================================================== */
+.nav-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.dropdown-arrow {
+  font-size: 0.72rem;
+  transition: transform 0.25s ease;
+}
+
+.nav-dropdown-wrapper.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.services-mega-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  width: 580px;
+  max-width: 92vw;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 1.25rem;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(16px);
+}
+
+.nav-dropdown-wrapper.open .services-mega-dropdown {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.mega-dropdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.dropdown-category {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.category-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.dropdown-item:hover {
+  background: var(--bg-subtle);
+  transform: translateX(3px);
+}
+
+.dropdown-item .item-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.dropdown-item .item-info {
+  flex: 1;
+}
+
+.dropdown-item .item-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dropdown-item .item-desc {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.badge-new {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  color: white;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+/* ==========================================================================
+   🚀 QUICK CAMPUS SERVICES LAUNCHER (SOLVING HOMEPAGE CLUSTERING)
+   ========================================================================== */
+.services-launcher-section {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.launcher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.launcher-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.services-grid-hub {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.hub-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.hub-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.hub-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.hub-card:hover::before {
+  opacity: 1;
+}
+
+.hub-card.active-hub {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.hub-card.active-hub::before {
+  opacity: 1;
+}
+
+.hub-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: var(--bg-subtle);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.hub-card:hover .hub-icon {
+  transform: scale(1.08);
+}
+
+.hub-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.hub-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hub-subtitle {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hub-status-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+/* ==========================================================================
+   🛡️ DIGITAL HOSTEL GATE PASS & E-PASS COMPONENT STYLES
+   ========================================================================== */
+.digital-gatepass-banner {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(14, 165, 233, 0.08) 100%);
+  border: 1px solid rgba(79, 70, 229, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.digital-gatepass-banner::after {
+  content: 'SKIT GATE PASS';
+  position: absolute;
+  right: -20px;
+  bottom: -25px;
+  font-size: 5rem;
+  font-weight: 900;
+  color: rgba(79, 70, 229, 0.04);
+  pointer-events: none;
+  letter-spacing: -0.05em;
+  user-select: none;
+}
+
+.gatepass-inner-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+}
+
+.gatepass-card-interactive {
+  background: var(--bg-card);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: 0 15px 35px -10px rgba(79, 70, 229, 0.25);
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+}
+
+.gatepass-hologram-strip {
+  height: 6px;
+  background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ec4899);
+  background-size: 200% 100%;
+  animation: hologramShine 4s linear infinite;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+@keyframes hologramShine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.gatepass-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.gatepass-title-sub {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.gatepass-code {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--primary);
+  font-family: monospace;
+}
+
+.gatepass-qr-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-color);
+  margin: 12px 0;
+}
+
+.gatepass-details-table {
+  width: 100%;
+  font-size: 0.78rem;
+  border-collapse: collapse;
+}
+
+.gatepass-details-table td {
+  padding: 4px 0;
+}
+
+.gatepass-details-table td:first-child {
+  color: var(--text-muted);
+  width: 40%;
+}
+
+.gatepass-details-table td:last-child {
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.guardian-verified-stamp {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid var(--success);
+  color: var(--success);
+  font-size: 0.72rem;
+  font-weight: 800;
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.pass-action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .services-mega-dropdown {
+    width: 320px;
+  }
+  .mega-dropdown-grid {
+    grid-template-columns: 1fr;
+  }
+  .gatepass-inner-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 

@@ -47,7 +47,7 @@
       <span>Smart Campus Admin</span>
     </a>
 
-    <!-- Navigation Tabs -->
+    <!-- Navigation Tabs with Anti-Clustering Dropdown -->
     <div class="nav-tabs">
       <button type="button" class="nav-tab-btn active" onclick="switchAdminTab('notices')">
         📢 <span>Notices</span>
@@ -56,18 +56,57 @@
         🎓 <span>Student Verifications</span>
         <span id="badgePendingVerifications" class="status-pill status-pending" style="font-size: 0.7rem; padding: 2px 7px; margin-left: 4px; display: none;">0</span>
       </button>
-      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('timetable')">
-        📅 <span>Time Table</span>
+      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('gatepass')">
+        🛡️ <span>Gate Pass Desk</span>
+        <span id="badgePendingGatePasses" class="status-pill status-pending" style="font-size: 0.7rem; padding: 2px 7px; margin-left: 4px; display: inline-block;">1</span>
       </button>
-      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('grievances')">
-        🛠️ <span>Grievance Desk</span>
-      </button>
-      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('lostfound')">
-        🔍 <span>Lost &amp; Found Hub</span>
-      </button>
-      <button type="button" class="nav-tab-btn" onclick="switchAdminTab('bookings')">
-        🏢 <span>Booking Approvals</span>
-      </button>
+
+      <!-- ⚡ More Admin Desks Dropdown -->
+      <div class="nav-dropdown-wrapper" id="adminDesksDropdownWrap">
+        <button type="button" class="nav-tab-btn dropdown-toggle-btn" id="adminDropdownBtn" onclick="toggleAdminDropdown(event)">
+          <span>⚡ More Desks</span>
+          <span class="dropdown-arrow">▾</span>
+        </button>
+        <div class="services-mega-dropdown" id="adminDropdownMenu" style="width: 480px;">
+          <div class="mega-dropdown-grid">
+            <div class="dropdown-category">
+              <div class="category-title">Academics &amp; Classes</div>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchAdminTab('timetable'); closeAdminDropdown();">
+                <span class="item-icon">📅</span>
+                <div class="item-info">
+                  <div class="item-name">Time Table Manager</div>
+                  <div class="item-desc">Slot schedule, faculty &amp; room updates</div>
+                </div>
+              </a>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchAdminTab('bookings'); closeAdminDropdown();">
+                <span class="item-icon">🏢</span>
+                <div class="item-info">
+                  <div class="item-name">Booking Approvals</div>
+                  <div class="item-desc">Review lab, audi &amp; hall requests</div>
+                </div>
+              </a>
+            </div>
+
+            <div class="dropdown-category">
+              <div class="category-title">Campus Welfare &amp; Security</div>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchAdminTab('grievances'); closeAdminDropdown();">
+                <span class="item-icon">🛠️</span>
+                <div class="item-info">
+                  <div class="item-name">Grievance Desk</div>
+                  <div class="item-desc">Assign technicians &amp; resolve tickets</div>
+                </div>
+              </a>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchAdminTab('lostfound'); closeAdminDropdown();">
+                <span class="item-icon">🔍</span>
+                <div class="item-info">
+                  <div class="item-name">Lost &amp; Found Desk</div>
+                  <div class="item-desc">Approve items &amp; manage security returns</div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Admin Profile & Switcher -->
@@ -93,10 +132,26 @@
   <div class="main-wrapper">
 
     <!-- Admin KPI Overview -->
-    <div class="stats-grid" style="margin-top: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div class="stats-grid" style="margin-top: 1rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+      <div class="stat-card" style="cursor: pointer;" onclick="switchAdminTab('gatepass')">
+        <div class="stat-info">
+          <h4>Pending Gate Passes</h4>
+          <div class="stat-number" id="adminStatGatePasses" style="color: var(--primary);">1</div>
+          <div style="font-size: 0.72rem; color: var(--warning); font-weight: 700; margin-top: 2px;">Warden Call Required</div>
+        </div>
+        <div class="stat-icon-wrap stat-purple">🛡️</div>
+      </div>
+      <div class="stat-card" style="cursor: pointer;" onclick="switchAdminTab('gatepass')">
+        <div class="stat-info">
+          <h4>Students Outside Campus</h4>
+          <div class="stat-number" id="adminStatOutsideStudents" style="color: var(--secondary);">1</div>
+          <div style="font-size: 0.72rem; color: var(--success); font-weight: 700; margin-top: 2px;">Checked Out at Gate 1</div>
+        </div>
+        <div class="stat-icon-wrap stat-blue">🚶</div>
+      </div>
       <div class="stat-card" style="cursor: pointer;" onclick="switchAdminTab('verifications')">
         <div class="stat-info">
-          <h4>Pending Student Verifications</h4>
+          <h4>Pending Verifications</h4>
           <div class="stat-number" id="adminStatVerifications" style="color: var(--primary);">0</div>
         </div>
         <div class="stat-icon-wrap stat-purple">🎓</div>
@@ -124,7 +179,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-info">
-          <h4>Pending Facility Bookings</h4>
+          <h4>Pending Bookings</h4>
           <div class="stat-number" id="adminStatBookings">0</div>
         </div>
         <div class="stat-icon-wrap stat-emerald">🏢</div>
@@ -323,6 +378,63 @@
         </table>
       </div>
     </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 5: 🛡️ HOSTEL WARDEN OUTING & GATE PASS DESK -->
+    <!-- ============================================== -->
+    <div id="admintab-gatepass" class="module-content">
+      <div class="toolbar-row" style="flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.35rem;">🛡️ Hostel Warden Outing Desk &amp; Gate Approvals</h3>
+          <p style="margin: 3px 0 0 0; font-size: 0.84rem; color: var(--text-muted);">
+            Verify parent/guardian permission, review outing destinations, approve digital gate passes, and monitor campus exit logs.
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="renderAdminGatePasses()">
+            🔄 Refresh Outing Queue
+          </button>
+        </div>
+      </div>
+
+      <div class="toolbar-row" style="margin-top: 1rem; flex-wrap: wrap; gap: 12px;">
+        <div class="filter-group" id="adminGatePassFilterGroup">
+          <button type="button" class="filter-btn active" onclick="filterAdminGatePasses('All')">All Requests</button>
+          <button type="button" class="filter-btn" onclick="filterAdminGatePasses('Pending')">
+            ⏳ Pending Warden (<span id="adminPendingGatePassCount">1</span>)
+          </button>
+          <button type="button" class="filter-btn" onclick="filterAdminGatePasses('Out of Campus')">🚶 Outside Campus</button>
+          <button type="button" class="filter-btn" onclick="filterAdminGatePasses('Approved')">✓ Approved Passes</button>
+          <button type="button" class="filter-btn" onclick="filterAdminGatePasses('Completed')">🏠 Returned Safely</button>
+        </div>
+
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="adminGatePassSearchInput" placeholder="Search student roll, name, hostel or guardian..." oninput="handleAdminGatePassSearch()">
+        </div>
+      </div>
+
+      <div class="table-container" style="margin-top: 1rem;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Pass ID &amp; Applied</th>
+              <th>Student Details</th>
+              <th>Hostel &amp; Room</th>
+              <th>Outing Reason &amp; Destination</th>
+              <th>Timing Window</th>
+              <th>Guardian Contact &amp; Consent</th>
+              <th>Status</th>
+              <th style="text-align: right;">Warden Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminGatePassTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
 
   </div> <!-- /main-wrapper -->
 
@@ -533,6 +645,48 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal: Warden Outing Action & Guardian Verification Call -->
+  <div class="modal-backdrop" id="modalWardenAction">
+    <div class="modal-dialog" style="max-width: 520px;">
+      <div class="modal-header">
+        <h4 class="modal-title">🛡️ Chief Warden Outing Verification</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalWardenAction')">&times;</button>
+      </div>
+      <form id="formWardenAction" onsubmit="handleSaveWardenAction(event)">
+        <input type="hidden" id="wardenPassId">
+        <input type="hidden" id="wardenActionType">
+        <div class="modal-body">
+          <div id="wardenStudentInfoBox" style="background: var(--bg-subtle); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 0.85rem;">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div class="form-group" id="wardenCallVerificationGroup">
+            <label class="form-label">Parent / Guardian Phone Verification</label>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="text" id="wardenGuardianPhoneDisplay" class="form-control" readonly style="font-weight: 700;">
+              <button type="button" class="btn btn-secondary" onclick="simulateCallGuardian()">📞 Dial Parent</button>
+            </div>
+            <select id="wardenConsentConfirm" class="form-control">
+              <option value="Call Verified">✓ Guardian Spoke with Warden &amp; Confirmed Consent</option>
+              <option value="Written Consent on Record">✓ Written WhatsApp / SMS Consent on Record</option>
+              <option value="Parent Not Reachable">⚠️ Parent Phone Not Reachable</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="wardenNoteInput">Warden Review Remarks / Log</label>
+            <textarea id="wardenNoteInput" class="form-control" rows="2" placeholder="e.g. Spoke to father at 05:40 PM. Outing allowed until 8 PM." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer" id="wardenActionFooter">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalWardenAction')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnConfirmWardenSubmit">Approve &amp; Issue Pass</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 
   <!-- Scripts -->
   <script src="js/data.js"></script>

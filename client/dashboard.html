@@ -19,26 +19,81 @@
       <span>Smart Campus</span>
     </a>
 
-    <!-- Navigation Tabs -->
+    <!-- Navigation Tabs with Anti-Clustering Mega Dropdown -->
     <div class="nav-tabs">
       <button type="button" class="nav-tab-btn active" onclick="switchModule('notices')">
-        📢 <span>Notice Board</span>
+        📢 <span>Notices</span>
       </button>
       <button type="button" class="nav-tab-btn" id="navTabAttendance" onclick="switchModule('attendance')">
-        📊 <span>Attendance &amp; Bunks</span>
+        📊 <span>Attendance</span>
       </button>
       <button type="button" class="nav-tab-btn" onclick="switchModule('timetable')">
         📅 <span>Time Table</span>
       </button>
-      <button type="button" class="nav-tab-btn" onclick="switchModule('lostfound')">
-        🔍 <span>Lost &amp; Found</span>
+      <button type="button" class="nav-tab-btn" onclick="switchModule('gatepass')">
+        🛡️ <span>Gate Pass</span> <span class="badge-new" style="margin-left: 3px;">NEW</span>
       </button>
-      <button type="button" class="nav-tab-btn" onclick="switchModule('complaints')">
-        🛠️ <span>Grievance Desk</span>
-      </button>
-      <button type="button" class="nav-tab-btn" onclick="switchModule('bookings')">
-        🏢 <span>Facility Booking</span>
-      </button>
+
+      <!-- ⚡ Campus Services Mega Dropdown -->
+      <div class="nav-dropdown-wrapper" id="campusServicesDropdownWrap">
+        <button type="button" class="nav-tab-btn dropdown-toggle-btn" id="servicesDropdownBtn" onclick="toggleServicesDropdown(event)">
+          <span>⚡ More Services</span>
+          <span class="dropdown-arrow">▾</span>
+        </button>
+        <div class="services-mega-dropdown" id="servicesDropdownMenu">
+          <div class="mega-dropdown-grid">
+            <div class="dropdown-category">
+              <div class="category-title">Academic &amp; Student Life</div>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchModule('timetable'); closeServicesDropdown();">
+                <span class="item-icon">📅</span>
+                <div class="item-info">
+                  <div class="item-name">Student Timetable</div>
+                  <div class="item-desc">Class schedules, slots &amp; room allocations</div>
+                </div>
+              </a>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchModule('attendance'); closeServicesDropdown();">
+                <span class="item-icon">📊</span>
+                <div class="item-info">
+                  <div class="item-name">Attendance &amp; Safe Bunks</div>
+                  <div class="item-desc">75% attendance rule predictor &amp; safe bunks</div>
+                </div>
+              </a>
+            </div>
+
+            <div class="dropdown-category">
+              <div class="category-title">Hostel &amp; Campus Facilities</div>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchModule('gatepass'); closeServicesDropdown();">
+                <span class="item-icon">🛡️</span>
+                <div class="item-info">
+                  <div class="item-name">Hostel Gate Pass <span class="badge-new">NEW</span></div>
+                  <div class="item-desc">Outing requests, Warden &amp; Guardian verification</div>
+                </div>
+              </a>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchModule('bookings'); closeServicesDropdown();">
+                <span class="item-icon">🏢</span>
+                <div class="item-info">
+                  <div class="item-name">Lab &amp; Hall Booking</div>
+                  <div class="item-desc">Reserve university labs, auditoriums &amp; rooms</div>
+                </div>
+              </a>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchModule('lostfound'); closeServicesDropdown();">
+                <span class="item-icon">🔍</span>
+                <div class="item-info">
+                  <div class="item-name">Lost &amp; Found Hub</div>
+                  <div class="item-desc">Report misplaced belongings on campus</div>
+                </div>
+              </a>
+              <a href="javascript:void(0)" class="dropdown-item" onclick="switchModule('complaints'); closeServicesDropdown();">
+                <span class="item-icon">🛠️</span>
+                <div class="item-info">
+                  <div class="item-name">Grievance Desk</div>
+                  <div class="item-desc">Submit Wi-Fi, lab, or hostel maintenance issues</div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- User Profile & Controls -->
@@ -95,7 +150,7 @@
     </div>
 
     <!-- KPI Stat Counters -->
-    <div class="stats-grid">
+    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
       <div class="stat-card" id="statCardAttendance" style="cursor: pointer;" onclick="switchModule('attendance')">
         <div class="stat-info">
           <h4>My Attendance</h4>
@@ -104,33 +159,126 @@
         </div>
         <div class="stat-icon-wrap stat-blue">📊</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="cursor: pointer;" onclick="switchModule('gatepass')">
+        <div class="stat-info">
+          <h4>Hostel Gate Pass</h4>
+          <div class="stat-number" id="statGatePassCount" style="color: var(--primary);">1 Active</div>
+          <div style="font-size: 0.74rem; font-weight: 700; color: var(--success); margin-top: 3px;">🛡️ QR Pass Ready</div>
+        </div>
+        <div class="stat-icon-wrap stat-purple">🛡️</div>
+      </div>
+      <div class="stat-card" style="cursor: pointer;" onclick="switchModule('notices')">
         <div class="stat-info">
           <h4>Active Notices</h4>
           <div class="stat-number" id="statNoticeCount">0</div>
         </div>
         <div class="stat-icon-wrap stat-blue">📢</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="cursor: pointer;" onclick="switchModule('lostfound')">
         <div class="stat-info">
-          <h4>Lost &amp; Found Items</h4>
+          <h4>Lost &amp; Found</h4>
           <div class="stat-number" id="statLostCount">0</div>
         </div>
         <div class="stat-icon-wrap stat-amber">🔍</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="cursor: pointer;" onclick="switchModule('complaints')">
         <div class="stat-info">
-          <h4>Active Complaints</h4>
+          <h4>Complaints</h4>
           <div class="stat-number" id="statComplaintCount">0</div>
         </div>
         <div class="stat-icon-wrap stat-purple">🛠️</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="cursor: pointer;" onclick="switchModule('bookings')">
         <div class="stat-info">
           <h4>My Bookings</h4>
           <div class="stat-number" id="statBookingCount">0</div>
         </div>
         <div class="stat-icon-wrap stat-emerald">🏢</div>
+      </div>
+    </div>
+
+    <!-- 🚀 CREATIVE UI: CAMPUS SERVICES HUB LAUNCHER (SOLVING NAVBAR & HOMEPAGE CLUSTERING) -->
+    <div class="services-launcher-section">
+      <div class="launcher-header">
+        <div class="launcher-title">
+          <span>⚡ Campus Services Hub</span>
+          <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">(Quick 1-Click Access)</span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-muted);">
+          Select any service below to open its dedicated workspace:
+        </div>
+      </div>
+
+      <div class="services-grid-hub">
+        <!-- 1. Gate Pass Hub -->
+        <div class="hub-card" onclick="switchModule('gatepass')">
+          <div class="hub-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">🛡️</div>
+          <div class="hub-info">
+            <div class="hub-name">Hostel Gate Pass <span class="badge-new">NEW</span></div>
+            <div class="hub-subtitle">Outing form &amp; Warden approval</div>
+            <span class="hub-status-badge status-approved">QR Pass Live</span>
+          </div>
+        </div>
+
+        <!-- 3. Attendance -->
+        <div class="hub-card" onclick="switchModule('attendance')">
+          <div class="hub-icon" style="background: rgba(79, 70, 229, 0.15); color: var(--primary);">📊</div>
+          <div class="hub-info">
+            <div class="hub-name">Attendance &amp; Bunks</div>
+            <div class="hub-subtitle">75% criteria calculator &amp; logs</div>
+            <span class="hub-status-badge status-approved" id="hubAttBadge">85% Safe</span>
+          </div>
+        </div>
+
+        <!-- 4. Timetable -->
+        <div class="hub-card" onclick="switchModule('timetable')">
+          <div class="hub-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">📅</div>
+          <div class="hub-info">
+            <div class="hub-name">Time Table</div>
+            <div class="hub-subtitle">Class schedules &amp; lab slots</div>
+            <span class="hub-status-badge status-pending">Daily Schedule</span>
+          </div>
+        </div>
+
+        <!-- 5. Notices -->
+        <div class="hub-card" onclick="switchModule('notices')">
+          <div class="hub-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">📢</div>
+          <div class="hub-info">
+            <div class="hub-name">Notice Board</div>
+            <div class="hub-subtitle">Datesheets, circulars &amp; fests</div>
+            <span class="hub-status-badge status-pending">Updated Today</span>
+          </div>
+        </div>
+
+        <!-- 6. Facility Bookings -->
+        <div class="hub-card" onclick="switchModule('bookings')">
+          <div class="hub-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">🏢</div>
+          <div class="hub-info">
+            <div class="hub-name">Facility Booking</div>
+            <div class="hub-subtitle">Labs, Audi &amp; Seminar halls</div>
+            <span class="hub-status-badge status-approved">Instant Slot</span>
+          </div>
+        </div>
+
+        <!-- 7. Lost & Found -->
+        <div class="hub-card" onclick="switchModule('lostfound')">
+          <div class="hub-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">🔍</div>
+          <div class="hub-info">
+            <div class="hub-name">Lost &amp; Found</div>
+            <div class="hub-subtitle">Report &amp; recover campus items</div>
+            <span class="hub-status-badge status-pending">Campus Desk</span>
+          </div>
+        </div>
+
+        <!-- 8. Grievance Desk -->
+        <div class="hub-card" onclick="switchModule('complaints')">
+          <div class="hub-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--danger);">🛠️</div>
+          <div class="hub-info">
+            <div class="hub-name">Grievance Desk</div>
+            <div class="hub-subtitle">Wi-Fi, Hostel &amp; Lab tickets</div>
+            <span class="hub-status-badge status-pending">Fast Resolution</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -381,6 +529,70 @@
         </table>
       </div>
     </div>
+
+    <!-- ============================================== -->
+    <!-- MODULE 5: 🛡️ HOSTEL DIGITAL OUTING GATE PASS -->
+    <!-- ============================================== -->
+    <div id="module-gatepass" class="module-content">
+      <div class="toolbar-row" style="flex-wrap: wrap; gap: 12px; margin-bottom: 1.25rem;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.35rem; color: var(--text-primary);">🛡️ Hostel &amp; College Outing Gate Pass System</h3>
+          <p style="margin: 3px 0 0 0; font-size: 0.84rem; color: var(--text-muted);">
+            Apply for hostel outing or night leave with chief warden approval and parent/guardian verification.
+          </p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="renderGatePassModule()">
+            🔄 Refresh Passes
+          </button>
+          <button type="button" class="btn btn-primary" onclick="openModal('modalApplyGatePass')">
+            + Apply For Outing Pass
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Active E-Gate Pass Card Container -->
+      <div id="activeGatePassBannerContainer">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Gate Pass History & Table Header -->
+      <div class="toolbar-row" style="margin-top: 1.5rem; flex-wrap: wrap; gap: 12px;">
+        <div class="filter-group" id="gatePassFilterGroup">
+          <button type="button" class="filter-btn active" onclick="filterGatePasses('All')">All Passes</button>
+          <button type="button" class="filter-btn" onclick="filterGatePasses('Approved')">✓ Approved</button>
+          <button type="button" class="filter-btn" onclick="filterGatePasses('Out of Campus')">🚶 Out of Campus</button>
+          <button type="button" class="filter-btn" onclick="filterGatePasses('Pending')">⏳ Pending Review</button>
+          <button type="button" class="filter-btn" onclick="filterGatePasses('Completed')">🏠 Returned Safely</button>
+        </div>
+
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="gatePassSearchInput" placeholder="Search pass ID, destination, guardian..." oninput="handleGatePassSearch()">
+        </div>
+      </div>
+
+      <div class="table-container" style="margin-top: 1rem;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Pass ID</th>
+              <th>Hostel / Room</th>
+              <th>Outing Type</th>
+              <th>Destination &amp; Purpose</th>
+              <th>Departure &amp; Return</th>
+              <th>Guardian Consent</th>
+              <th>Status</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="gatePassesTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
 
   </div> <!-- /main-wrapper -->
 
@@ -811,6 +1023,144 @@
           <button type="submit" class="btn btn-primary" id="btnBulkImportSubmit">Import All Courses</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: APPLY FOR HOSTEL OUTING GATE PASS -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalApplyGatePass">
+    <div class="modal-dialog" style="max-width: 640px;">
+      <div class="modal-header">
+        <h4 class="modal-title">🛡️ Apply For Hostel Outing Gate Pass</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalApplyGatePass')">&times;</button>
+      </div>
+      <form id="formApplyGatePass" onsubmit="handleApplyGatePass(event)">
+        <div class="modal-body">
+          <div style="background: var(--bg-subtle); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 1rem; border-left: 4px solid var(--primary);">
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">Hostel Warden Outing Policy:</div>
+            <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+              Outing requests require chief hostel warden approval. Guardians may be called for phone confirmation prior to gate departure.
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gpStudentName">Student Name</label>
+              <input type="text" id="gpStudentName" class="form-control" readonly required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="gpRollNo">College Roll No</label>
+              <input type="text" id="gpRollNo" class="form-control" readonly required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gpHostelBlock">Hostel Block</label>
+              <select id="gpHostelBlock" class="form-control" required>
+                <option value="Boys Hostel Block A">Boys Hostel Block A</option>
+                <option value="Boys Hostel Block B">Boys Hostel Block B</option>
+                <option value="Girls Hostel Nirvana Block 1">Girls Hostel Nirvana Block 1</option>
+                <option value="Girls Hostel Nirvana Block 2">Girls Hostel Nirvana Block 2</option>
+                <option value="Day Scholar Outing">Day Scholar Campus Pass</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="gpRoomNo">Room Number</label>
+              <input type="text" id="gpRoomNo" class="form-control" placeholder="e.g. A-214" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gpOutingType">Outing Category</label>
+              <select id="gpOutingType" class="form-control" required>
+                <option value="Day Outing">Local Day Outing (Market / City)</option>
+                <option value="Home / Night Leave">Home / Night Leave (Extended / Weekend)</option>
+                <option value="Medical Emergency">Medical Consultation / Emergency</option>
+                <option value="Academic / Project Work">Academic / Project Hardware Work</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="gpDestination">Destination Location</label>
+              <input type="text" id="gpDestination" class="form-control" placeholder="e.g. GT Malviya Nagar / Kota (Home)" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="gpPurpose">Detailed Purpose &amp; Reason</label>
+            <textarea id="gpPurpose" class="form-control" rows="2" placeholder="Specify exact reason for leaving campus..." required></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gpDepartureDate">Departure Date &amp; Time</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="date" id="gpDepartureDate" class="form-control" style="flex: 1.2;" required>
+                <input type="time" id="gpDepartureTime" class="form-control" style="flex: 1;" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="gpReturnDate">Expected Return Date &amp; Time</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="date" id="gpReturnDate" class="form-control" style="flex: 1.2;" required>
+                <input type="time" id="gpReturnTime" class="form-control" style="flex: 1;" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gpGuardianName">Parent / Guardian Name</label>
+              <input type="text" id="gpGuardianName" class="form-control" placeholder="e.g. Shri R. K. Goyal (Father)" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="gpGuardianPhone">Parent / Guardian Contact Phone</label>
+              <input type="tel" id="gpGuardianPhone" class="form-control" placeholder="e.g. +91 94140 12345" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="gpGuardianConsent">Guardian Permission Status</label>
+            <select id="gpGuardianConsent" class="form-control" required>
+              <option value="Parent Call Verification Required">📞 Pending Warden Call Verification with Parent</option>
+              <option value="Consent Pre-Confirmed by Parent">✓ Parent Has Already Called / Given Prior Consent</option>
+              <option value="Written Consent on Record">📩 Written WhatsApp / SMS Consent on Record</option>
+            </select>
+          </div>
+
+          <div style="display: flex; align-items: flex-start; gap: 8px; margin-top: 10px;">
+            <input type="checkbox" id="gpAgreementCheck" style="margin-top: 3px;" required>
+            <label for="gpAgreementCheck" style="font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
+              I declare that I have obtained parental permission and will abide by the campus security code of conduct. I will report back through Main Gate 1 prior to the declared return time.
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalApplyGatePass')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitGatePass">Submit Outing Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: VIEW DIGITAL QR GATE PASS -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalViewGatePass">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <div class="modal-header">
+        <h4 class="modal-title">🛡️ SKIT Digital E-Gate Pass</h4>
+        <button type="button" class="modal-close" onclick="closeModal('modalViewGatePass')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;" id="viewGatePassModalBody">
+        <!-- Injected dynamically with high fidelity pass -->
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalViewGatePass')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="simulatePrintGatePass()">🖨️ Print / Download PDF</button>
+      </div>
     </div>
   </div>
 

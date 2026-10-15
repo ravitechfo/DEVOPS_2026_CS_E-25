@@ -11,6 +11,7 @@ const StateManager = {
     ATTENDANCE: 'smart_campus_attendance',
     COLLEGES: 'smart_campus_colleges',
     VERIFICATIONS: 'smart_campus_verifications',
+    GATE_PASSES: 'smart_campus_gate_passes',
     USER: 'smart_campus_user'
   },
 
@@ -41,6 +42,9 @@ const StateManager = {
     }
     if (!localStorage.getItem(this.KEYS.VERIFICATIONS)) {
       localStorage.setItem(this.KEYS.VERIFICATIONS, JSON.stringify(INITIAL_DATA.verifications || []));
+    }
+    if (!localStorage.getItem(this.KEYS.GATE_PASSES) || JSON.parse(localStorage.getItem(this.KEYS.GATE_PASSES) || '[]').length === 0) {
+      localStorage.setItem(this.KEYS.GATE_PASSES, JSON.stringify(INITIAL_DATA.gatePasses || []));
     }
     if (!localStorage.getItem(this.KEYS.ATTENDANCE) || JSON.parse(localStorage.getItem(this.KEYS.ATTENDANCE) || '[]').length === 0) {
       localStorage.setItem(this.KEYS.ATTENDANCE, JSON.stringify(INITIAL_DATA.attendance || []));
@@ -658,7 +662,87 @@ const StateManager = {
       anySimulated,
       isEmpty: false
     };
-  }
+  },
+
+  // ==========================================
+  // 🛡️ HOSTEL OUTING & GATE PASS STATE API
+  // ==========================================
+  getGatePasses() {
+    return JSON.parse(localStorage.getItem(this.KEYS.GATE_PASSES) || '[]');
+  },
+
+  getGatePassById(id) {
+    const list = this.getGatePasses();
+    return list.find(g => g.id === id) || null;
+  },
+
+  addGatePass(passData) {
+    const list = this.getGatePasses();
+    const passCodeNum = Math.floor(1000 + Math.random() * 9000);
+    const passCode = `GP-2026-${passCodeNum}`;
+    const newPass = {
+      id: 'gp-' + Date.now(),
+      passCode,
+      appliedAt: new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      status: 'Pending',
+      guardianConsent: passData.guardianConsent || 'Pending Warden Call',
+      guardianConsentNote: passData.guardianConsentNote || 'Awaiting warden verification call with parent/guardian.',
+      qrCodeData: `SKIT-OUTING-${passCode}-${passData.rollNo || 'STU'}-VERIFIED`,
+      approvedAt: null,
+      wardenName: null,
+      securityCheckOut: null,
+      securityCheckIn: null,
+      ...passData
+    };
+    list.unshift(newPass);
+    localStorage.setItem(this.KEYS.GATE_PASSES, JSON.stringify(list));
+    return newPass;
+  },
+
+  updateGatePassStatus(id, status, wardenName = 'Chief Hostel Warden', guardianConsent = 'Call Verified', note = '') {
+    const list = this.getGatePasses();
+    const pass = list.find(g => g.id === id);
+    if (pass) {
+      pass.status = status;
+      if (status === 'Approved') {
+        pass.approvedAt = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        pass.wardenName = wardenName;
+        pass.guardianConsent = guardianConsent;
+        if (note) pass.guardianConsentNote = note;
+      } else if (status === 'Rejected') {
+        pass.rejectedAt = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        pass.wardenName = wardenName;
+        pass.rejectionReason = note || 'Guardian phone confirmation unsuccessful or curfew restriction.';
+      }
+      localStorage.setItem(this.KEYS.GATE_PASSES, JSON.stringify(list));
+    }
+    return pass;
+  },
+
+  punchGatePass(id, punchType, gateNote = '') {
+    const list = this.getGatePasses();
+    const pass = list.find(g => g.id === id);
+    if (!pass) return null;
+
+    const timeStr = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    if (punchType === 'exit') {
+      pass.status = 'Out of Campus';
+      pass.securityCheckOut = `${timeStr} (Gate 1 - ${gateNote || 'Guard Checked'})`;
+    } else if (punchType === 'entry') {
+      pass.status = 'Completed';
+      pass.securityCheckIn = `${timeStr} (Gate 1 - ${gateNote || 'Returned Safely'})`;
+    }
+    localStorage.setItem(this.KEYS.GATE_PASSES, JSON.stringify(list));
+    return pass;
+  },
+
+  deleteGatePass(id) {
+    let list = this.getGatePasses();
+    list = list.filter(g => g.id !== id);
+    localStorage.setItem(this.KEYS.GATE_PASSES, JSON.stringify(list));
+  },
+
+  // ==========================================
 };
 
 // UI Notification Toasts

@@ -132,8 +132,28 @@ function setupDatePicker() {
   }
 }
 
+// Dropdown Toggle & Services Hub
+function toggleServicesDropdown(event) {
+  if (event) event.stopPropagation();
+  const wrap = document.getElementById('campusServicesDropdownWrap');
+  if (wrap) wrap.classList.toggle('open');
+}
+
+function closeServicesDropdown() {
+  const wrap = document.getElementById('campusServicesDropdownWrap');
+  if (wrap) wrap.classList.remove('open');
+}
+
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('campusServicesDropdownWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    wrap.classList.remove('open');
+  }
+});
+
 // Module Navigation Tabs
 function switchModule(moduleName) {
+  closeServicesDropdown();
   const user = StateManager.getUser();
   const isStudent = (user.role === 'student' || !user.role);
 
@@ -147,8 +167,24 @@ function switchModule(moduleName) {
   const buttons = document.querySelectorAll('.nav-tab-btn');
   buttons.forEach(btn => btn.classList.remove('active'));
   
-  const targetBtn = Array.from(buttons).find(b => b.onclick && b.onclick.toString().includes(moduleName));
-  if (targetBtn) targetBtn.classList.add('active');
+  const targetBtn = Array.from(buttons).find(b => b.onclick && b.onclick.toString().includes(`'${moduleName}'`));
+  if (targetBtn) {
+    targetBtn.classList.add('active');
+  } else {
+    // If inside mega dropdown, highlight More Services dropdown button
+    const dropdownBtn = document.getElementById('servicesDropdownBtn');
+    if (dropdownBtn) dropdownBtn.classList.add('active');
+  }
+
+  // Update Hub Launcher Cards active state
+  const hubCards = document.querySelectorAll('.hub-card');
+  hubCards.forEach(card => {
+    if (card.getAttribute('onclick') && card.getAttribute('onclick').includes(moduleName)) {
+      card.classList.add('active-hub');
+    } else {
+      card.classList.remove('active-hub');
+    }
+  });
 
   // Update content sections
   const contents = document.querySelectorAll('.module-content');
@@ -156,6 +192,9 @@ function switchModule(moduleName) {
 
   const targetSection = document.getElementById(`module-${moduleName}`);
   if (targetSection) targetSection.classList.add('active');
+
+  // Trigger module-specific renders
+  if (moduleName === 'gatepass') renderGatePassModule();
 }
 
 // Render All Modules & Stats
@@ -166,6 +205,8 @@ function renderAllModules() {
   renderLostFound();
   renderComplaints();
   renderFacilitiesAndBookings();
+  renderGatePassModule();
+  initGatePassFormDefaults();
   updateStats();
 }
 
@@ -175,11 +216,26 @@ function updateStats() {
   const complaints = StateManager.getComplaints();
   const bookings = StateManager.getBookings();
   const overallStats = StateManager.calculateOverallStats();
+  const gatePasses = StateManager.getGatePasses();
 
-  document.getElementById('statNoticeCount').innerText = notices.length;
-  document.getElementById('statLostCount').innerText = lostFound.length;
-  document.getElementById('statComplaintCount').innerText = complaints.filter(c => c.status !== 'Resolved').length;
-  document.getElementById('statBookingCount').innerText = bookings.length;
+  const noticeCountEl = document.getElementById('statNoticeCount');
+  if (noticeCountEl) noticeCountEl.innerText = notices.length;
+
+  const lostCountEl = document.getElementById('statLostCount');
+  if (lostCountEl) lostCountEl.innerText = lostFound.length;
+
+  const cmpCountEl = document.getElementById('statComplaintCount');
+  if (cmpCountEl) cmpCountEl.innerText = complaints.filter(c => c.status !== 'Resolved').length;
+
+  const bkCountEl = document.getElementById('statBookingCount');
+  if (bkCountEl) bkCountEl.innerText = bookings.length;
+
+  // Gate Pass Count
+  const gpStatEl = document.getElementById('statGatePassCount');
+  if (gpStatEl) {
+    const activePass = gatePasses.find(g => g.status === 'Approved' || g.status === 'Out of Campus');
+    gpStatEl.innerText = activePass ? (activePass.status === 'Out of Campus' ? '🚶 Out (Gate 1)' : '✓ 1 Active') : `${gatePasses.length} Passes`;
+  }
 
   const attPercentEl = document.getElementById('statAttendancePercent');
   const attSubEl = document.getElementById('statAttendanceSubtitle');
@@ -192,6 +248,12 @@ function updateStats() {
       attSubEl.innerText = `🔴 Shortage (${overallStats.dangerCount} Subjects < 75%)`;
       attSubEl.style.color = 'var(--danger)';
     }
+  }
+
+  // Update Hub Launcher Badge for attendance
+  const hubAttBadge = document.getElementById('hubAttBadge');
+  if (hubAttBadge) {
+    hubAttBadge.innerText = `${overallStats.overallPercentage}% Safe`;
   }
 }
 
@@ -1627,23 +1689,47 @@ function handleBulkImportAttendance(e) {
   }
 }
 
-// Modal Helpers
+// Modal Helpers with Background Scroll Lock
 function openModal(id) {
   const modal = document.getElementById(id);
-  if (modal) modal.classList.add('open');
+  if (modal) {
+    modal.classList.add('open');
+    document.body.classList.add('modal-open');
+    // Focus first input or button for accessibility & immediate keyboard scroll
+    const firstInput = modal.querySelector('input:not([readonly]), textarea, select, button.btn-primary');
+    if (firstInput) setTimeout(() => firstInput.focus(), 50);
+  }
 }
 
 function closeModal(id) {
   const modal = document.getElementById(id);
-  if (modal) modal.classList.remove('open');
+  if (modal) {
+    modal.classList.remove('open');
+  }
+  if (!document.querySelector('.modal-backdrop.open')) {
+    document.body.classList.remove('modal-open');
+  }
 }
 
 // Close modals when clicking backdrop
-window.onclick = function(e) {
-  if (e.target.classList.contains('modal-backdrop')) {
+window.addEventListener('click', function(e) {
+  if (e.target.classList && e.target.classList.contains('modal-backdrop')) {
     e.target.classList.remove('open');
+    if (!document.querySelector('.modal-backdrop.open')) {
+      document.body.classList.remove('modal-open');
+    }
   }
-};
+});
+
+// Close open modals on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const openModals = document.querySelectorAll('.modal-backdrop.open');
+    openModals.forEach(m => m.classList.remove('open'));
+    document.body.classList.remove('modal-open');
+    closeServicesDropdown();
+  }
+});
 
 // Scroll Reveal Observer
 function initScrollReveal() {
@@ -1688,3 +1774,373 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   initCardTilt();
 });
+
+// ==========================================================================
+// 🛡️ HOSTEL OUTING & DIGITAL GATE PASS CONTROLLER
+// ==========================================================================
+let currentGatePassFilter = 'All';
+
+function renderGatePassModule() {
+  const passes = StateManager.getGatePasses();
+  const user = StateManager.getUser();
+
+  // 1. Render Active Pass Banner Showcase
+  const activePassContainer = document.getElementById('activeGatePassBannerContainer');
+  if (activePassContainer) {
+    const activePass = passes.find(g => g.status === 'Approved' || g.status === 'Out of Campus');
+    
+    if (activePass) {
+      const isOut = activePass.status === 'Out of Campus';
+      activePassContainer.innerHTML = `
+        <div class="digital-gatepass-banner">
+          <div class="gatepass-inner-grid">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span class="status-pill ${isOut ? 'status-pending' : 'status-approved'}">
+                  ${isOut ? '🚶 OUT OF CAMPUS (CHECKED OUT)' : '🛡️ ACTIVE VERIFIED PASS'}
+                </span>
+                <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700;">Valid Today</span>
+              </div>
+              <h3 style="margin: 0 0 6px 0; font-size: 1.25rem; color: var(--text-primary);">
+                ${activePass.outingType} to ${activePass.destination}
+              </h3>
+              <p style="margin: 0 0 12px 0; font-size: 0.82rem; color: var(--text-secondary); max-width: 540px;">
+                <strong>Reason:</strong> ${activePass.purpose}
+              </p>
+              
+              <div style="display: flex; flex-wrap: wrap; gap: 15px; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px;">
+                <div>🕒 <strong>Out Window:</strong> ${activePass.departureTime} - ${activePass.expectedReturnTime}</div>
+                <div>🏢 <strong>Hostel:</strong> ${activePass.hostelBlock} (Room ${activePass.roomNo})</div>
+                <div>📞 <strong>Guardian:</strong> ${activePass.guardianName} (${activePass.guardianPhone})</div>
+              </div>
+
+              <div class="guardian-verified-stamp">
+                <span>🛡️</span>
+                <span>${activePass.guardianConsentNote || 'Guardian confirmed phone verification with chief warden.'}</span>
+              </div>
+
+              <div class="pass-action-buttons">
+                <button type="button" class="btn btn-primary btn-sm" onclick="viewGatePassModal('${activePass.id}')">
+                  👁️ Inspect Full QR Pass
+                </button>
+                ${!isOut ? `
+                  <button type="button" class="btn btn-warning btn-sm" onclick="simulateGatePunch('${activePass.id}', 'exit')">
+                    🚶 Simulate Security Exit Punch (Gate 1)
+                  </button>
+                ` : `
+                  <button type="button" class="btn btn-success btn-sm" onclick="simulateGatePunch('${activePass.id}', 'entry')">
+                    🏠 Simulate Security Return Punch (Gate 1)
+                  </button>
+                `}
+              </div>
+            </div>
+
+            <!-- E-Gate Pass Card Preview -->
+            <div class="gatepass-card-interactive" onclick="viewGatePassModal('${activePass.id}')" style="cursor: pointer;">
+              <div class="gatepass-hologram-strip"></div>
+              <div class="gatepass-header-row">
+                <div>
+                  <div class="gatepass-title-sub">SKIT DIGITAL GATE PASS</div>
+                  <div class="gatepass-code">${activePass.passCode}</div>
+                </div>
+                <div style="text-align: right;">
+                  <span class="role-pill role-student" style="font-size: 0.65rem;">STUDENT PASS</span>
+                </div>
+              </div>
+
+              <div class="gatepass-qr-box">
+                <!-- Visual SVG QR Code -->
+                <svg width="120" height="120" viewBox="0 0 100 100" style="shape-rendering: crispEdges;">
+                  <rect width="100" height="100" fill="#ffffff"/>
+                  <path d="M10,10 h24 v24 h-24 z M14,14 v16 h16 v-16 z M18,18 h8 v8 h-8 z" fill="#0f172a"/>
+                  <path d="M66,10 h24 v24 h-24 z M70,14 v16 h16 v-16 z M74,18 h8 v8 h-8 z" fill="#0f172a"/>
+                  <path d="M10,66 h24 v24 h-24 z M14,70 v16 h16 v-16 z M18,74 h8 v8 h-8 z" fill="#0f172a"/>
+                  <rect x="42" y="12" width="6" height="6" fill="#4f46e5"/>
+                  <rect x="52" y="16" width="6" height="6" fill="#0f172a"/>
+                  <rect x="42" y="26" width="6" height="6" fill="#0f172a"/>
+                  <rect x="52" y="32" width="6" height="6" fill="#4f46e5"/>
+                  <rect x="14" y="42" width="6" height="6" fill="#0f172a"/>
+                  <rect x="24" y="48" width="6" height="6" fill="#0f172a"/>
+                  <rect x="36" y="42" width="6" height="6" fill="#4f46e5"/>
+                  <rect x="46" y="48" width="8" height="8" fill="#4f46e5"/>
+                  <rect x="62" y="42" width="6" height="6" fill="#0f172a"/>
+                  <rect x="74" y="48" width="6" height="6" fill="#0f172a"/>
+                  <rect x="84" y="42" width="6" height="6" fill="#4f46e5"/>
+                  <rect x="42" y="66" width="6" height="6" fill="#0f172a"/>
+                  <rect x="52" y="74" width="6" height="6" fill="#4f46e5"/>
+                  <rect x="66" y="66" width="6" height="6" fill="#0f172a"/>
+                  <rect x="76" y="74" width="6" height="6" fill="#0f172a"/>
+                  <rect x="84" y="82" width="6" height="6" fill="#4f46e5"/>
+                </svg>
+              </div>
+
+              <table class="gatepass-details-table">
+                <tr><td>Student:</td><td>${activePass.studentName}</td></tr>
+                <tr><td>Roll No:</td><td>${activePass.rollNo}</td></tr>
+                <tr><td>Room No:</td><td>${activePass.roomNo} (${activePass.hostelBlock})</td></tr>
+                <tr><td>Valid Until:</td><td>Today, ${activePass.expectedReturnTime}</td></tr>
+              </table>
+
+              <div style="margin-top: 8px; text-align: center; font-size: 0.68rem; color: var(--text-muted);">
+                Click to inspect and show to guard
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      activePassContainer.innerHTML = `
+        <div style="background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin-bottom: 1.5rem;">
+          <div style="font-size: 2rem; margin-bottom: 6px;">🛡️</div>
+          <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">No Active Gate Pass at Present</h4>
+          <p style="margin: 0 0 12px 0; font-size: 0.82rem; color: var(--text-muted);">
+            Need to leave the campus for market, medical, or weekend home leave? Submit an outing request below for warden verification.
+          </p>
+          <button type="button" class="btn btn-primary btn-sm" onclick="openModal('modalApplyGatePass')">
+            + Apply For Outing Gate Pass
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  // 2. Render Passes History Table
+  renderGatePassesTable();
+}
+
+function renderGatePassesTable() {
+  const tbody = document.getElementById('gatePassesTableBody');
+  if (!tbody) return;
+
+  let passes = StateManager.getGatePasses();
+  const searchInput = document.getElementById('gatePassSearchInput');
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+  if (currentGatePassFilter !== 'All') {
+    passes = passes.filter(p => p.status === currentGatePassFilter);
+  }
+
+  if (query) {
+    passes = passes.filter(p => 
+      p.passCode.toLowerCase().includes(query) ||
+      p.destination.toLowerCase().includes(query) ||
+      p.purpose.toLowerCase().includes(query) ||
+      p.guardianName.toLowerCase().includes(query)
+    );
+  }
+
+  if (passes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">No outing gate passes matching filter '${currentGatePassFilter}'.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = passes.map(p => {
+    let statusBadge = '';
+    if (p.status === 'Approved') statusBadge = '<span class="status-pill status-approved">✓ Approved</span>';
+    else if (p.status === 'Out of Campus') statusBadge = '<span class="status-pill status-pending" style="background: rgba(245, 158, 11, 0.15); color: #d97706;">🚶 Out of Campus</span>';
+    else if (p.status === 'Pending') statusBadge = '<span class="status-pill status-pending">⏳ Pending Warden</span>';
+    else if (p.status === 'Completed') statusBadge = '<span class="status-pill status-approved" style="background: rgba(16, 185, 129, 0.12); color: var(--success);">🏠 Returned Safely</span>';
+    else statusBadge = `<span class="status-pill status-rejected">✕ ${p.status}</span>`;
+
+    return `
+      <tr>
+        <td>
+          <strong style="font-family: monospace; color: var(--primary);">${p.passCode}</strong>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${p.appliedAt}</div>
+        </td>
+        <td>
+          <div style="font-weight: 700;">${p.roomNo}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${p.hostelBlock}</div>
+        </td>
+        <td>
+          <span class="role-pill role-student" style="font-size: 0.7rem;">${p.outingType}</span>
+        </td>
+        <td>
+          <div style="font-weight: 700; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.destination}">${p.destination}</div>
+          <div style="font-size: 0.74rem; color: var(--text-muted); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.purpose}">${p.purpose}</div>
+        </td>
+        <td>
+          <div style="font-size: 0.8rem; font-weight: 600;">Dep: ${p.departureDate} ${p.departureTime}</div>
+          <div style="font-size: 0.74rem; color: var(--text-muted);">Ret: ${p.expectedReturnDate} ${p.expectedReturnTime}</div>
+        </td>
+        <td>
+          <div style="font-size: 0.78rem; font-weight: 600;">${p.guardianName}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${p.guardianPhone}</div>
+          <span style="font-size: 0.68rem; color: var(--success); font-weight: 700;">${p.guardianConsent}</span>
+        </td>
+        <td>${statusBadge}</td>
+        <td style="text-align: right;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="viewGatePassModal('${p.id}')">
+            👁️ Pass
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterGatePasses(status) {
+  currentGatePassFilter = status;
+  const btns = document.querySelectorAll('#gatePassFilterGroup .filter-btn');
+  btns.forEach(btn => btn.classList.toggle('active', btn.innerText.includes(status) || (status === 'All' && btn.innerText.startsWith('All'))));
+  renderGatePassesTable();
+}
+
+function handleGatePassSearch() {
+  renderGatePassesTable();
+}
+
+function handleApplyGatePass(event) {
+  event.preventDefault();
+  const user = StateManager.getUser();
+
+  const newPass = StateManager.addGatePass({
+    studentName: document.getElementById('gpStudentName').value || user.name || 'Ravi Goyal',
+    studentEmail: user.email || '24eskcs677@skit.ac.in',
+    rollNo: document.getElementById('gpRollNo').value || user.rollNo || '24ESKCS677',
+    hostelBlock: document.getElementById('gpHostelBlock').value,
+    roomNo: document.getElementById('gpRoomNo').value,
+    outingType: document.getElementById('gpOutingType').value,
+    destination: document.getElementById('gpDestination').value,
+    purpose: document.getElementById('gpPurpose').value,
+    departureDate: document.getElementById('gpDepartureDate').value,
+    departureTime: document.getElementById('gpDepartureTime').value,
+    expectedReturnDate: document.getElementById('gpReturnDate').value,
+    expectedReturnTime: document.getElementById('gpReturnTime').value,
+    guardianName: document.getElementById('gpGuardianName').value,
+    guardianPhone: document.getElementById('gpGuardianPhone').value,
+    guardianConsent: document.getElementById('gpGuardianConsent').value,
+    guardianConsentNote: `Outing request submitted by student. Awaiting warden verification with ${document.getElementById('gpGuardianName').value}.`
+  });
+
+  closeModal('modalApplyGatePass');
+  document.getElementById('formApplyGatePass').reset();
+  initGatePassFormDefaults();
+  renderGatePassModule();
+  updateStats();
+  showToast(`Gate Pass application (${newPass.passCode}) submitted for Chief Warden review!`, 'success');
+}
+
+function initGatePassFormDefaults() {
+  const user = StateManager.getUser();
+  const nameEl = document.getElementById('gpStudentName');
+  const rollEl = document.getElementById('gpRollNo');
+  if (nameEl) nameEl.value = user.name || 'Ravi Goyal';
+  if (rollEl) rollEl.value = user.rollNo || '24ESKCS677';
+
+  const today = new Date().toISOString().split('T')[0];
+  const depDate = document.getElementById('gpDepartureDate');
+  const retDate = document.getElementById('gpReturnDate');
+  if (depDate) { depDate.min = today; depDate.value = today; }
+  if (retDate) { retDate.min = today; retDate.value = today; }
+  const depTime = document.getElementById('gpDepartureTime');
+  const retTime = document.getElementById('gpReturnTime');
+  if (depTime && !depTime.value) depTime.value = '17:00';
+  if (retTime && !retTime.value) retTime.value = '21:00';
+}
+
+function viewGatePassModal(id) {
+  const pass = StateManager.getGatePassById(id);
+  if (!pass) return;
+
+  const bodyEl = document.getElementById('viewGatePassModalBody');
+  if (!bodyEl) return;
+
+  bodyEl.innerHTML = `
+    <div style="border: 2px solid var(--primary); border-radius: var(--radius-md); padding: 1.25rem; background: var(--bg-card); position: relative; overflow: hidden;">
+      <div class="gatepass-hologram-strip"></div>
+      
+      <div style="text-align: center; border-bottom: 1px dashed var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
+        <div style="font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);">
+          SWAMI KESHVANAND INSTITUTE OF TECHNOLOGY, JAIPUR
+        </div>
+        <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 2px 0;">
+          CAMPUS &amp; HOSTEL OUTING PASS
+        </div>
+        <div style="font-size: 0.82rem; font-weight: 800; color: var(--primary); font-family: monospace;">
+          ${pass.passCode}
+        </div>
+      </div>
+
+      <div class="gatepass-qr-box">
+        <svg width="140" height="140" viewBox="0 0 100 100" style="shape-rendering: crispEdges;">
+          <rect width="100" height="100" fill="#ffffff"/>
+          <path d="M10,10 h24 v24 h-24 z M14,14 v16 h16 v-16 z M18,18 h8 v8 h-8 z" fill="#0f172a"/>
+          <path d="M66,10 h24 v24 h-24 z M70,14 v16 h16 v-16 z M74,18 h8 v8 h-8 z" fill="#0f172a"/>
+          <path d="M10,66 h24 v24 h-24 z M14,70 v16 h16 v-16 z M18,74 h8 v8 h-8 z" fill="#0f172a"/>
+          <rect x="42" y="12" width="6" height="6" fill="#4f46e5"/>
+          <rect x="52" y="16" width="6" height="6" fill="#0f172a"/>
+          <rect x="42" y="26" width="6" height="6" fill="#0f172a"/>
+          <rect x="52" y="32" width="6" height="6" fill="#4f46e5"/>
+          <rect x="14" y="42" width="6" height="6" fill="#0f172a"/>
+          <rect x="24" y="48" width="6" height="6" fill="#0f172a"/>
+          <rect x="36" y="42" width="6" height="6" fill="#4f46e5"/>
+          <rect x="46" y="48" width="8" height="8" fill="#4f46e5"/>
+          <rect x="62" y="42" width="6" height="6" fill="#0f172a"/>
+          <rect x="74" y="48" width="6" height="6" fill="#0f172a"/>
+          <rect x="84" y="42" width="6" height="6" fill="#4f46e5"/>
+          <rect x="42" y="66" width="6" height="6" fill="#0f172a"/>
+          <rect x="52" y="74" width="6" height="6" fill="#4f46e5"/>
+          <rect x="66" y="66" width="6" height="6" fill="#0f172a"/>
+          <rect x="76" y="74" width="6" height="6" fill="#0f172a"/>
+          <rect x="84" y="82" width="6" height="6" fill="#4f46e5"/>
+        </svg>
+      </div>
+
+      <table class="gatepass-details-table" style="font-size: 0.8rem;">
+        <tr><td>Student Name:</td><td>${pass.studentName}</td></tr>
+        <tr><td>Roll Number:</td><td>${pass.rollNo}</td></tr>
+        <tr><td>Hostel &amp; Room:</td><td>${pass.hostelBlock} (Room ${pass.roomNo})</td></tr>
+        <tr><td>Outing Category:</td><td>${pass.outingType}</td></tr>
+        <tr><td>Destination:</td><td>${pass.destination}</td></tr>
+        <tr><td>Purpose:</td><td>${pass.purpose}</td></tr>
+        <tr><td>Departure:</td><td>${pass.departureDate} at ${pass.departureTime}</td></tr>
+        <tr><td>Expected Return:</td><td>${pass.expectedReturnDate} at ${pass.expectedReturnTime}</td></tr>
+        <tr><td>Guardian Name:</td><td>${pass.guardianName} (${pass.guardianPhone})</td></tr>
+        <tr><td>Warden Sign:</td><td>${pass.wardenName || 'Chief Hostel Warden'}</td></tr>
+        <tr><td>Status:</td><td><strong style="color: var(--primary);">${pass.status}</strong></td></tr>
+      </table>
+
+      ${pass.securityCheckOut ? `
+        <div style="margin-top: 8px; font-size: 0.72rem; color: var(--text-muted); background: var(--bg-subtle); padding: 4px 8px; border-radius: 4px;">
+          🚪 <strong>Exit Gate Punch:</strong> ${pass.securityCheckOut}
+        </div>
+      ` : ''}
+
+      ${pass.securityCheckIn ? `
+        <div style="margin-top: 4px; font-size: 0.72rem; color: var(--success); background: rgba(16, 185, 129, 0.1); padding: 4px 8px; border-radius: 4px;">
+          🏠 <strong>Return Gate Punch:</strong> ${pass.securityCheckIn}
+        </div>
+      ` : ''}
+
+      <div class="guardian-verified-stamp" style="margin-top: 10px;">
+        <span>🛡️</span>
+        <span>${pass.guardianConsentNote || 'Guardian Phone Verification Complete & Verified.'}</span>
+      </div>
+    </div>
+  `;
+
+  openModal('modalViewGatePass');
+}
+
+function simulateGatePunch(id, punchType) {
+  const res = StateManager.punchGatePass(id, punchType);
+  if (res) {
+    if (punchType === 'exit') {
+      showToast(`Gate Punch Out Recorded! Have a safe outing. Please return before ${res.expectedReturnTime}.`, 'info');
+    } else {
+      showToast(`Gate Punch In Recorded! Welcome back to campus. Pass ${res.passCode} marked Completed.`, 'success');
+    }
+    renderGatePassModule();
+    updateStats();
+  }
+}
+
+function simulatePrintGatePass() {
+  showToast('Printing Digital Pass / Downloading Security PDF...', 'success');
+  setTimeout(() => {
+    window.print();
+  }, 300);
+}
+
+// ==========================================================================

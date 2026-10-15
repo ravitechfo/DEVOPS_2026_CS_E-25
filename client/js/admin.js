@@ -13,23 +13,51 @@ function initAdminProfile() {
   document.getElementById('adminUserName').innerText = user.name || 'SKIT Administrator';
 }
 
+// Admin Dropdown Toggle
+function toggleAdminDropdown(event) {
+  if (event) event.stopPropagation();
+  const wrap = document.getElementById('adminDesksDropdownWrap');
+  if (wrap) wrap.classList.toggle('open');
+}
+
+function closeAdminDropdown() {
+  const wrap = document.getElementById('adminDesksDropdownWrap');
+  if (wrap) wrap.classList.remove('open');
+}
+
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('adminDesksDropdownWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    wrap.classList.remove('open');
+  }
+});
+
 function switchAdminTab(tabName) {
+  closeAdminDropdown();
   const buttons = document.querySelectorAll('.admin-navbar .nav-tab-btn');
   buttons.forEach(btn => btn.classList.remove('active'));
 
-  const targetBtn = Array.from(buttons).find(b => b.onclick && b.onclick.toString().includes(tabName));
-  if (targetBtn) targetBtn.classList.add('active');
+  const targetBtn = Array.from(buttons).find(b => b.onclick && b.onclick.toString().includes(`'${tabName}'`));
+  if (targetBtn) {
+    targetBtn.classList.add('active');
+  } else {
+    const adminDropBtn = document.getElementById('adminDropdownBtn');
+    if (adminDropBtn) adminDropBtn.classList.add('active');
+  }
 
   const contents = document.querySelectorAll('.module-content');
   contents.forEach(sec => sec.classList.remove('active'));
 
   const targetSection = document.getElementById(`admintab-${tabName}`);
   if (targetSection) targetSection.classList.add('active');
+
+  if (tabName === 'gatepass') renderAdminGatePasses();
 }
 
 function renderAdminAll() {
   renderAdminNotices();
   renderAdminVerifications();
+  renderAdminGatePasses();
   renderAdminTimetable();
   renderAdminGrievances();
   renderAdminLostFound();
@@ -43,8 +71,11 @@ function updateAdminStats() {
   const grievances = StateManager.getComplaints();
   const lostFound = StateManager.getLostFound();
   const bookings = StateManager.getBookings();
+  const gatePasses = StateManager.getGatePasses();
 
   const pendingVerifications = verifications.filter(v => v.status === 'Pending').length;
+  const pendingGatePasses = gatePasses.filter(g => g.status === 'Pending').length;
+  const outStudents = gatePasses.filter(g => g.status === 'Out of Campus').length;
 
   const statVerifEl = document.getElementById('adminStatVerifications');
   if (statVerifEl) statVerifEl.innerText = pendingVerifications;
@@ -55,13 +86,37 @@ function updateAdminStats() {
     badgeVerifEl.style.display = pendingVerifications > 0 ? 'inline-block' : 'none';
   }
 
+  // Gate Pass Stats
+  const statGPEl = document.getElementById('adminStatGatePasses');
+  if (statGPEl) statGPEl.innerText = pendingGatePasses;
+
+  const badgeGPEl = document.getElementById('badgePendingGatePasses');
+  if (badgeGPEl) {
+    badgeGPEl.innerText = pendingGatePasses;
+    badgeGPEl.style.display = pendingGatePasses > 0 ? 'inline-block' : 'none';
+  }
+
+  const pendingGPCountEl = document.getElementById('adminPendingGatePassCount');
+  if (pendingGPCountEl) pendingGPCountEl.innerText = pendingGatePasses;
+
+  const outStatEl = document.getElementById('adminStatOutsideStudents');
+  if (outStatEl) outStatEl.innerText = outStudents;
+
+
   const filterCountEl = document.getElementById('countPendingFilter');
   if (filterCountEl) filterCountEl.innerText = pendingVerifications;
 
-  document.getElementById('adminStatNotices').innerText = notices.length;
-  document.getElementById('adminStatGrievances').innerText = grievances.filter(g => g.status !== 'Resolved').length;
-  document.getElementById('adminStatLostFound').innerText = lostFound.filter(l => l.status === 'Open').length;
-  document.getElementById('adminStatBookings').innerText = bookings.filter(b => b.status === 'Pending').length;
+  const noticesEl = document.getElementById('adminStatNotices');
+  if (noticesEl) noticesEl.innerText = notices.length;
+
+  const grievancesEl = document.getElementById('adminStatGrievances');
+  if (grievancesEl) grievancesEl.innerText = grievances.filter(g => g.status !== 'Resolved').length;
+
+  const lfEl = document.getElementById('adminStatLostFound');
+  if (lfEl) lfEl.innerText = lostFound.filter(l => l.status === 'Open').length;
+
+  const bkEl = document.getElementById('adminStatBookings');
+  if (bkEl) bkEl.innerText = bookings.filter(b => b.status === 'Pending').length;
 }
 
 // ==========================================
@@ -488,22 +543,44 @@ function handleBookingApproval(id, decision) {
   updateAdminStats();
 }
 
-// Modal Helpers
+// Modal Helpers with Background Scroll Lock
 function openModal(id) {
   const modal = document.getElementById(id);
-  if (modal) modal.classList.add('open');
+  if (modal) {
+    modal.classList.add('open');
+    document.body.classList.add('modal-open');
+    const firstInput = modal.querySelector('input:not([readonly]), textarea, select, button.btn-primary');
+    if (firstInput) setTimeout(() => firstInput.focus(), 50);
+  }
 }
 
 function closeModal(id) {
   const modal = document.getElementById(id);
-  if (modal) modal.classList.remove('open');
+  if (modal) {
+    modal.classList.remove('open');
+  }
+  if (!document.querySelector('.modal-backdrop.open')) {
+    document.body.classList.remove('modal-open');
+  }
 }
 
-window.onclick = function(e) {
-  if (e.target.classList.contains('modal-backdrop')) {
+window.addEventListener('click', function(e) {
+  if (e.target.classList && e.target.classList.contains('modal-backdrop')) {
     e.target.classList.remove('open');
+    if (!document.querySelector('.modal-backdrop.open')) {
+      document.body.classList.remove('modal-open');
+    }
   }
-};
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const openModals = document.querySelectorAll('.modal-backdrop.open');
+    openModals.forEach(m => m.classList.remove('open'));
+    document.body.classList.remove('modal-open');
+    closeAdminDropdown();
+  }
+});
 
 // Interactive 3D Parallax Tilt Effect for Admin Stat Cards
 function initCardTilt() {
@@ -525,3 +602,181 @@ function initCardTilt() {
 document.addEventListener('DOMContentLoaded', () => {
   initCardTilt();
 });
+
+// ==========================================
+// 🛡️ WARDEN OUTING DESK CONTROLLER
+// ==========================================
+let currentAdminGatePassFilter = 'All';
+
+function renderAdminGatePasses() {
+  const tbody = document.getElementById('adminGatePassTableBody');
+  if (!tbody) return;
+
+  let passes = StateManager.getGatePasses();
+  const searchInput = document.getElementById('adminGatePassSearchInput');
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+  if (currentAdminGatePassFilter !== 'All') {
+    passes = passes.filter(p => p.status === currentAdminGatePassFilter);
+  }
+
+  if (query) {
+    passes = passes.filter(p => 
+      p.passCode.toLowerCase().includes(query) ||
+      p.studentName.toLowerCase().includes(query) ||
+      p.rollNo.toLowerCase().includes(query) ||
+      p.destination.toLowerCase().includes(query) ||
+      p.hostelBlock.toLowerCase().includes(query) ||
+      p.guardianName.toLowerCase().includes(query)
+    );
+  }
+
+  if (passes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">No outing pass requests matching '${currentAdminGatePassFilter}'.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = passes.map(p => {
+    let statusBadge = '';
+    if (p.status === 'Approved') statusBadge = '<span class="status-pill status-approved">✓ Approved</span>';
+    else if (p.status === 'Out of Campus') statusBadge = '<span class="status-pill status-pending" style="background: rgba(245, 158, 11, 0.15); color: #d97706;">🚶 Outside Campus</span>';
+    else if (p.status === 'Pending') statusBadge = '<span class="status-pill status-pending">⏳ Pending Warden Review</span>';
+    else if (p.status === 'Completed') statusBadge = '<span class="status-pill status-approved" style="background: rgba(16, 185, 129, 0.12); color: var(--success);">🏠 Returned Safely</span>';
+    else statusBadge = `<span class="status-pill status-rejected">✕ ${p.status}</span>`;
+
+    const isPending = p.status === 'Pending';
+    const isApproved = p.status === 'Approved';
+    const isOut = p.status === 'Out of Campus';
+
+    return `
+      <tr>
+        <td>
+          <strong style="font-family: monospace; color: var(--primary);">${p.passCode}</strong>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${p.appliedAt}</div>
+        </td>
+        <td>
+          <div style="font-weight: 700;">${p.studentName}</div>
+          <div style="font-size: 0.74rem; color: var(--text-muted);">Roll: ${p.rollNo}</div>
+        </td>
+        <td>
+          <div style="font-weight: 700;">${p.roomNo}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${p.hostelBlock}</div>
+        </td>
+        <td>
+          <div style="font-weight: 700;">${p.outingType}</div>
+          <div style="font-size: 0.75rem; color: var(--text-secondary);" title="${p.destination}">${p.destination}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);" title="${p.purpose}">${p.purpose}</div>
+        </td>
+        <td>
+          <div style="font-size: 0.78rem;"><strong>Dep:</strong> ${p.departureDate} ${p.departureTime}</div>
+          <div style="font-size: 0.78rem;"><strong>Ret:</strong> ${p.expectedReturnDate} ${p.expectedReturnTime}</div>
+        </td>
+        <td>
+          <div style="font-weight: 700; font-size: 0.8rem;">${p.guardianName}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">
+            <a href="tel:${p.guardianPhone}" style="color: var(--primary); text-decoration: none;">📞 ${p.guardianPhone}</a>
+          </div>
+          <span style="font-size: 0.68rem; color: var(--success); font-weight: 700;">${p.guardianConsent}</span>
+        </td>
+        <td>${statusBadge}</td>
+        <td style="text-align: right;">
+          <div style="display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap;">
+            ${isPending ? `
+              <button type="button" class="btn btn-success btn-sm" onclick="openWardenActionModal('${p.id}', 'approve')">
+                ✓ Verify &amp; Approve
+              </button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="openWardenActionModal('${p.id}', 'reject')">
+                ✕ Reject
+              </button>
+            ` : isApproved ? `
+              <button type="button" class="btn btn-warning btn-sm" onclick="adminPunchPass('${p.id}', 'exit')">
+                🚪 Gate Exit Punch
+              </button>
+            ` : isOut ? `
+              <button type="button" class="btn btn-primary btn-sm" onclick="adminPunchPass('${p.id}', 'entry')">
+                🏠 Gate Return Punch
+              </button>
+            ` : `
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Completed</span>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterAdminGatePasses(status) {
+  currentAdminGatePassFilter = status;
+  const btns = document.querySelectorAll('#adminGatePassFilterGroup .filter-btn');
+  btns.forEach(btn => btn.classList.toggle('active', btn.innerText.includes(status) || (status === 'All' && btn.innerText.startsWith('All'))));
+  renderAdminGatePasses();
+}
+
+function handleAdminGatePassSearch() {
+  renderAdminGatePasses();
+}
+
+function openWardenActionModal(passId, actionType) {
+  const pass = StateManager.getGatePassById(passId);
+  if (!pass) return;
+
+  document.getElementById('wardenPassId').value = pass.id;
+  document.getElementById('wardenActionType').value = actionType;
+
+  const infoBox = document.getElementById('wardenStudentInfoBox');
+  infoBox.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+      <strong>${pass.studentName} (${pass.rollNo})</strong>
+      <span class="role-pill role-student">${pass.hostelBlock} • Room ${pass.roomNo}</span>
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-muted);">
+      <strong>Destination:</strong> ${pass.destination} (${pass.outingType})<br>
+      <strong>Reason:</strong> ${pass.purpose}<br>
+      <strong>Timing:</strong> ${pass.departureDate} ${pass.departureTime} to ${pass.expectedReturnDate} ${pass.expectedReturnTime}
+    </div>
+  `;
+
+  document.getElementById('wardenGuardianPhoneDisplay').value = `${pass.guardianName}: ${pass.guardianPhone}`;
+  document.getElementById('wardenNoteInput').value = actionType === 'approve'
+    ? `Warden verified with parent ${pass.guardianName} via call on ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}. Permission granted.`
+    : 'Parent requested to cancel outing or late curfew.';
+
+  const submitBtn = document.getElementById('btnConfirmWardenSubmit');
+  submitBtn.innerText = actionType === 'approve' ? 'Approve & Issue E-Gate Pass' : 'Confirm Rejection';
+  submitBtn.className = actionType === 'approve' ? 'btn btn-primary' : 'btn btn-danger';
+
+  openModal('modalWardenAction');
+}
+
+function simulateCallGuardian() {
+  const phoneVal = document.getElementById('wardenGuardianPhoneDisplay').value;
+  showToast(`Dialing Guardian: ${phoneVal}... Spoke with parent, consent verified!`, 'success');
+  const noteEl = document.getElementById('wardenNoteInput');
+  noteEl.value = `Phone verification completed with guardian at ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}. Parent explicitly authorized outing.`;
+}
+
+function handleSaveWardenAction(event) {
+  event.preventDefault();
+  const passId = document.getElementById('wardenPassId').value;
+  const actionType = document.getElementById('wardenActionType').value;
+  const consentStatus = document.getElementById('wardenConsentConfirm').value;
+  const note = document.getElementById('wardenNoteInput').value;
+
+  const status = actionType === 'approve' ? 'Approved' : 'Rejected';
+  StateManager.updateGatePassStatus(passId, status, 'Dr. S. K. Rathore (Hostel Chief Warden)', consentStatus, note);
+
+  closeModal('modalWardenAction');
+  renderAdminGatePasses();
+  updateAdminStats();
+  showToast(`Gate Pass request marked as ${status}!`, actionType === 'approve' ? 'success' : 'warning');
+}
+
+function adminPunchPass(passId, punchType) {
+  StateManager.punchGatePass(passId, punchType, 'Warden Office Punch');
+  showToast(punchType === 'exit' ? 'Security exit punch registered (Student out of campus).' : 'Security return punch registered (Student back safely).', 'success');
+  renderAdminGatePasses();
+  updateAdminStats();
+}
+
+
