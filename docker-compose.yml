@@ -1,0 +1,51 @@
+services:
+  # 1. Database Service (MongoDB)
+  mongodb:
+    image: mongo:6.0
+    container_name: smart_campus_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - smart_campus_net
+
+  # 2. Backend Service (Node.js Express REST API)
+  backend:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile
+    container_name: smart_campus_backend
+    restart: always
+    ports:
+      - "5001:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/smartcampus
+      - JWT_SECRET=supersecretkey123
+    depends_on:
+      - mongodb
+    networks:
+      - smart_campus_net
+
+  # 3. Frontend Web Service (Nginx Reverse Proxy & UI)
+  frontend:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.frontend
+    container_name: smart_campus_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - smart_campus_net
+
+volumes:
+  mongo_data:
+
+networks:
+  smart_campus_net:
+    driver: bridge
