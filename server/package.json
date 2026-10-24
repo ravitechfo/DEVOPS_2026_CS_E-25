@@ -1,13 +1,15 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Smart Campus REST API Backend",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "lint": "node -c server.js",
+    "test": "node test.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["smart-campus", "devops", "express", "mongodb"],
+  "author": "SKIT CS&E",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
