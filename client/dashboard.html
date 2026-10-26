@@ -1327,6 +1327,55 @@
         <button type="button" class="btn btn-primary" onclick="simulateDownloadPaper()">📥 Download PDF Paper</button>
       </div>
     </div>
+  <!-- Floating Campus AI Assistant Widget -->
+  <button type="button" class="ai-fab-btn" id="aiFabBtn" onclick="toggleAIChat()" aria-label="Ask Campus AI Assistant">
+    <span class="ai-fab-icon">🤖</span>
+    <span class="ai-fab-pulse"></span>
+    <span class="ai-fab-text">Campus AI</span>
+  </button>
+
+  <!-- Campus AI Assistant Chat Drawer -->
+  <div class="ai-chat-drawer" id="aiChatDrawer" style="display: none;">
+    <div class="ai-drawer-header">
+      <div class="ai-drawer-title-box">
+        <div class="ai-drawer-avatar">🤖</div>
+        <div>
+          <h4 class="ai-drawer-title">Campus AI Assistant</h4>
+          <div class="ai-drawer-subtitle">
+            <span class="ai-status-dot"></span>
+            <span>Online • Intelligent Helpdesk</span>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="ai-close-btn" onclick="toggleAIChat()" aria-label="Close Assistant">✕</button>
+    </div>
+
+    <div class="ai-chat-messages" id="aiChatMessages">
+      <div class="ai-msg bot">
+        <div class="ai-msg-bubble">
+          👋 Hi <strong>Student</strong>! I am your <strong>Smart Campus AI Assistant</strong>.
+          <br><br>
+          I can help you check <strong>Gate Pass rules</strong>, calculate <strong>Safe Bunks (75% Attendance)</strong>, find <strong>RTU 2023-25 PYQs</strong>, or report campus issues.
+          <br><br>
+          <em>Ask me anything or pick a quick question below!</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick action prompt chips -->
+    <div class="ai-chips-container" id="aiChipsContainer">
+      <button type="button" class="ai-prompt-chip" onclick="askAIQuickPrompt('Hostel Gate Pass Rules & Timings')">🛡️ Gate Pass Rules</button>
+      <button type="button" class="ai-prompt-chip" onclick="askAIQuickPrompt('75% Attendance & Safe Bunk Policy')">📊 Safe Bunk Policy</button>
+      <button type="button" class="ai-prompt-chip" onclick="askAIQuickPrompt('RTU Syllabi & Previous Year Question Papers')">📚 RTU PYQs & Notes</button>
+      <button type="button" class="ai-prompt-chip" onclick="askAIQuickPrompt('How to book AI & Robotics Lab?')">🏢 Book Lab/Hall</button>
+      <button type="button" class="ai-prompt-chip" onclick="askAIQuickPrompt('How to register Wi-Fi or Hostel Complaint?')">🛠️ Wi-Fi Complaint</button>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="ai-chat-input-bar">
+      <input type="text" id="aiChatInput" class="ai-input-field" placeholder="Ask about gate pass, attendance, PYQs..." onkeydown="handleAIChatKey(event)">
+      <button type="button" class="ai-send-btn" onclick="sendAIChatMessage()" aria-label="Send query">➤</button>
+    </div>
   </div>
 
   <!-- Scripts -->

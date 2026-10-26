@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+server/node_modules/
+client/node_modules/
+
+# Environment Variables & Secrets
+.env
+server/.env
+*.env.local
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# IDE & Editor Directories
+.idea/
+.vscode/
+.kilo/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python & Report Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Docker Local Artifacts & Temp
+.docker/

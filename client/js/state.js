@@ -808,6 +808,108 @@ const StateManager = {
     let list = JSON.parse(localStorage.getItem(this.KEYS.LIBRARY_RESOURCES) || '[]');
     list = list.filter(r => r.id !== id);
     localStorage.setItem(this.KEYS.LIBRARY_RESOURCES, JSON.stringify(list));
+  },
+
+  // 🌐 REST API Client & Server Synchronization Engine
+  API: {
+    getBaseUrl() {
+      if (window.location.protocol === 'file:') {
+        return 'http://localhost:5000';
+      }
+      return ''; // Relative path when served via Express or Nginx
+    },
+
+    async request(endpoint, options = {}) {
+      const base = this.getBaseUrl();
+      const url = `${base}${endpoint}`;
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(options.headers || {})
+      };
+
+      try {
+        const res = await fetch(url, { ...options, headers });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return await res.json();
+      } catch (err) {
+        console.warn(`[API Sync Fallback] ${endpoint}:`, err.message);
+        return null;
+      }
+    }
+  },
+
+  // Asynchronous sync from Express server on dashboard boot
+  async syncFromServer() {
+    try {
+      const health = await this.API.request('/health');
+      if (!health || health.status !== 'UP') {
+        console.log('ℹ️ Server offline or running in standalone mode. LocalStorage state active.');
+        return false;
+      }
+
+      console.log('🔗 Connected to Smart Campus Backend:', health.service);
+
+      // 1. Sync Notices
+      const serverNotices = await this.API.request('/api/notices');
+      if (serverNotices && Array.isArray(serverNotices) && serverNotices.length > 0) {
+        localStorage.setItem(this.KEYS.NOTICES, JSON.stringify(serverNotices));
+      }
+
+      // 2. Sync Gate Passes
+      const serverPasses = await this.API.request('/api/gatepass');
+      if (serverPasses && Array.isArray(serverPasses) && serverPasses.length > 0) {
+        localStorage.setItem(this.KEYS.GATE_PASSES, JSON.stringify(serverPasses));
+      }
+
+      // 3. Sync Complaints
+      const serverComplaints = await this.API.request('/api/complaints');
+      if (serverComplaints && Array.isArray(serverComplaints) && serverComplaints.length > 0) {
+        localStorage.setItem(this.KEYS.COMPLAINTS, JSON.stringify(serverComplaints));
+      }
+
+      // 4. Sync Lost & Found
+      const serverLostFound = await this.API.request('/api/lostfound');
+      if (serverLostFound && Array.isArray(serverLostFound) && serverLostFound.length > 0) {
+        localStorage.setItem(this.KEYS.LOST_FOUND, JSON.stringify(serverLostFound));
+      }
+
+      // 5. Sync Library
+      const serverLib = await this.API.request('/api/library');
+      if (serverLib && Array.isArray(serverLib) && serverLib.length > 0) {
+        localStorage.setItem(this.KEYS.LIBRARY_RESOURCES, JSON.stringify(serverLib));
+      }
+
+      return true;
+    } catch (e) {
+      console.warn('Sync notice:', e.message);
+      return false;
+    }
+  },
+
+  // Campus AI Assistant API Query
+  async askCampusAI(query) {
+    try {
+      const response = await this.API.request('/api/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify({ query })
+      });
+      if (response && response.reply) {
+        return response;
+      }
+    } catch (e) {
+      console.warn('Backend AI query fallback:', e);
+    }
+
+    // Local client-side fallback if server is offline
+    return {
+      reply: `I am your **SKIT Smart Campus AI Assistant** 🎓.\n\n- **Hostel Gate Pass:** Apply under Gate Pass tab before 8:30 PM.\n- **Attendance:** 75% mandatory under RTU rules.\n- **PYQs:** Check 2023-2025 question papers in the Library tab.\n- **Lab Booking:** Reserve AI & Robotics lab in More Services!`,
+      title: '🎓 Smart Campus AI Assistant (Offline)',
+      suggestedActions: ['Gate Pass Rules', 'Safe Bunks', 'RTU PYQs']
+    };
   }
 };
 

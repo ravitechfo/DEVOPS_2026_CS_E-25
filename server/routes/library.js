@@ -18,7 +18,8 @@ router.get('/', async (req, res) => {
     const resources = await LibraryResource.find(query);
     res.json(resources);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Library route error:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 

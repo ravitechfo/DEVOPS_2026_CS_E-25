@@ -7,5 +7,4 @@ const BookingSchema = new mongoose.Schema({
   timeSlot: { type: String, required: true },
   status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' }
 });
-
 module.exports = mongoose.model('Booking', BookingSchema);

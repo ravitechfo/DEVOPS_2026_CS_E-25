@@ -1,0 +1,84 @@
+name: 🚀 Continuous Integration & Docker Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  # =============================================================
+  # JOB 1: Test & Lint Backend
+  # =============================================================
+  test-and-lint:
+    name: 🧪 Automated Testing & Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: 'server/package-lock.json'
+
+      - name: 📦 Install Server Dependencies
+        run: |
+          cd server
+          npm ci || npm install
+
+      - name: 🔎 Verify JavaScript Syntax
+        run: |
+          cd server
+          node -c server.js
+          node -c routes/auth.js
+          node -c routes/booking.js
+          node -c routes/gatepass.js
+          node -c routes/library.js
+          node -c routes/notice.js
+          node -c routes/complaint.js
+          node -c routes/lostfound.js
+          node -c routes/ai.js
+
+      - name: 🧪 Run Automated Smoke & Unit Tests
+        run: |
+          npm test
+
+  # =============================================================
+  # JOB 2: Build & Validate Docker Containers
+  # =============================================================
+  docker-build:
+    name: 🐳 Docker Multi-Container Build Verification
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Validate Docker Compose Schema
+        run: |
+          docker compose config
+
+      - name: 🏗️ Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Docker/Dockerfile
+          push: false
+          tags: smart-campus-backend:latest
+
+      - name: 🌐 Build Frontend Nginx Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Docker/Dockerfile.frontend
+          push: false
+          tags: smart-campus-frontend:latest

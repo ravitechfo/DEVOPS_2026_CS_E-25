@@ -4,6 +4,13 @@
   "description": "Smart Campus Portal & DevOps Management System",
   "scripts": {
     "start": "node server/server.js",
+    "test": "npm test --prefix server",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "k8s:apply": "kubectl apply -k k8s/",
+    "k8s:delete": "kubectl delete -k k8s/",
+    "k8s:status": "kubectl get all -n smart-campus",
     "report:weekly": "python3 generate_report.py weekly",
     "report:monthly": "python3 generate_report.py monthly",
     "report:final": "python3 generate_report.py final"
