@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: smart-campus-devops
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: cd server && npm install
+    startCommand: node server/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        value: mongodb+srv://demo:demo123@cluster0.mongodb.net/smartcampus?retryWrites=true&w=majority

@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: smart-campus-backend:latest
+          image: smart-campus-backend:v3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
@@ -55,6 +55,22 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: smart-campus
+  labels:
+    app: smart-campus-backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 5000
+      name: http
+  selector:
+    app: smart-campus-backend
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,325 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: smart-campus
+  labels:
+    app: grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-service:9090
+        isDefault: true
+        editable: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provider
+  namespace: smart-campus
+  labels:
+    app: grafana
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'Smart Campus Dashboards'
+        orgId: 1
+        folder: 'Smart Campus'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-smart-campus-dashboard
+  namespace: smart-campus
+  labels:
+    app: grafana
+data:
+  smart-campus-dashboard.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "liveNow": true,
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+          "id": 100,
+          "title": "🎓 SKIT Smart Campus - Live DevOps Observability Overview",
+          "type": "row"
+        },
+        {
+          "id": 1,
+          "title": "Total HTTP Requests Processed",
+          "type": "stat",
+          "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+          "targets": [
+            {
+              "expr": "sum(http_requests_total)",
+              "legendFormat": "Requests",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "blue", "value": null },
+                  { "color": "green", "value": 50 }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["lastNotNull"], "values": false }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Active Student & Faculty Sessions",
+          "type": "stat",
+          "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+          "targets": [
+            {
+              "expr": "smart_campus_active_users",
+              "legendFormat": "Active Users",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "orange", "value": null },
+                  { "color": "green", "value": 100 }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto"
+          }
+        },
+        {
+          "id": 3,
+          "title": "Backend Memory Usage (RAM)",
+          "type": "gauge",
+          "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+          "targets": [
+            {
+              "expr": "process_resident_memory_bytes / 1024 / 1024",
+              "legendFormat": "RAM (MB)",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "max": 512,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 256 },
+                  { "color": "red", "value": 400 }
+                ]
+              },
+              "unit": "decmbytes"
+            }
+          }
+        },
+        {
+          "id": 4,
+          "title": "Cluster Orchestration Health",
+          "type": "stat",
+          "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+          "targets": [
+            {
+              "expr": "up{job=\"smart-campus-backend\"}",
+              "legendFormat": "Backend Pods UP",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "1": { "text": "HEALTHY 🟢", "color": "green" },
+                    "0": { "text": "DOWN 🔴", "color": "red" }
+                  }
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1 }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background"
+          }
+        },
+        {
+          "id": 5,
+          "title": "Live HTTP Request Rate (Requests/Sec)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+          "targets": [
+            {
+              "expr": "rate(http_requests_total[1m])",
+              "legendFormat": "{{method}} {{route}} ({{status_code}})",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "fillOpacity": 25
+              },
+              "unit": "reqps"
+            }
+          }
+        },
+        {
+          "id": 6,
+          "title": "Backend CPU Utilization (%)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+          "targets": [
+            {
+              "expr": "rate(process_cpu_seconds_total[1m]) * 100",
+              "legendFormat": "CPU Usage %",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "smooth",
+                "fillOpacity": 30
+              },
+              "unit": "percent"
+            }
+          }
+        }
+      ],
+      "refresh": "5s",
+      "schemaVersion": 39,
+      "tags": ["smart-campus", "devops", "kubernetes", "prometheus"],
+      "time": { "from": "now-15m", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Smart Campus - Production DevOps Dashboard",
+      "uid": "smart-campus-metrics",
+      "version": 1
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: smart-campus
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.4.0
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "admin"
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              value: "Admin"
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: grafana-datasources-vol
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: grafana-dashboard-provider-vol
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: grafana-dashboard-vol
+              mountPath: /var/lib/grafana/dashboards
+      volumes:
+        - name: grafana-datasources-vol
+          configMap:
+            name: grafana-datasources
+        - name: grafana-dashboard-provider-vol
+          configMap:
+            name: grafana-dashboard-provider
+        - name: grafana-dashboard-vol
+          configMap:
+            name: grafana-smart-campus-dashboard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: smart-campus
+  labels:
+    app: grafana
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http
+  selector:
+    app: grafana

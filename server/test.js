@@ -32,6 +32,7 @@ assert(fs.existsSync(path.join(__dirname, 'routes/notice.js')), 'routes/notice.j
 assert(fs.existsSync(path.join(__dirname, 'routes/complaint.js')), 'routes/complaint.js exists');
 assert(fs.existsSync(path.join(__dirname, 'routes/lostfound.js')), 'routes/lostfound.js exists');
 assert(fs.existsSync(path.join(__dirname, 'routes/ai.js')), 'routes/ai.js exists');
+assert(fs.existsSync(path.join(__dirname, 'middleware/metrics.js')), 'middleware/metrics.js exists');
 
 // 3. Verify Models
 assert(fs.existsSync(path.join(__dirname, 'models/User.js')), 'models/User.js exists');
@@ -53,7 +54,8 @@ const filesToCheck = [
   'routes/notice.js',
   'routes/complaint.js',
   'routes/lostfound.js',
-  'routes/ai.js'
+  'routes/ai.js',
+  'middleware/metrics.js'
 ];
 
 for (const file of filesToCheck) {

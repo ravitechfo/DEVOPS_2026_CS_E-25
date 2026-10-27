@@ -11,3 +11,5 @@ resources:
   - mongodb-deployment.yaml
   - backend-deployment.yaml
   - frontend-deployment.yaml
+  - prometheus-deployment.yaml
+  - grafana-deployment.yaml
